@@ -16,7 +16,7 @@ export default function CourseCard() {
   const [progress, setProgress] = useState(0);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => setProgress(90), 500);
+    const timer = setTimeout(() => setProgress(50), 500);
     return () => clearTimeout(timer);
   }, []);
 
