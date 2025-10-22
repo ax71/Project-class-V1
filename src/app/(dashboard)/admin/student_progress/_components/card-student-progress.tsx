@@ -37,6 +37,12 @@ export default function StudentProgressPage() {
       category: "UI/UX",
       thumbnail: "/course-3.jpg",
     },
+    {
+      id: 4,
+      title: "Responsive Layout Techniques",
+      category: "UI/UX",
+      thumbnail: "/course-4.jpg",
+    },
   ];
 
   // Filter pencarian
@@ -72,7 +78,7 @@ export default function StudentProgressPage() {
 
       {/* ===== Course Cards ===== */}
       {filteredCourses.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredCourses.map((course) => (
             <Card
               key={course.id}

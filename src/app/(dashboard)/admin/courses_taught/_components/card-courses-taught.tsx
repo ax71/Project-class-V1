@@ -36,6 +36,12 @@ export default function CoursesTaughtPage() {
       category: "UI/UX",
       thumbnail: "/course-3.jpg",
     },
+    {
+      id: 4,
+      title: "Responsive Layout Techniques",
+      category: "UI/UX",
+      thumbnail: "/course-4.jpg",
+    },
   ];
 
   // Filter pencarian berdasarkan judul kursus
@@ -44,7 +50,7 @@ export default function CoursesTaughtPage() {
   );
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
+    <main className="min-h-screen  p-6">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -74,7 +80,7 @@ export default function CoursesTaughtPage() {
 
       {/* ===== Course Cards ===== */}
       {filteredCourses.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredCourses.map((course) => (
             <Card
               key={course.id}

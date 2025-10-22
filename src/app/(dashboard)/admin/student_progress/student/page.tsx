@@ -44,12 +44,6 @@ export default function CourseStudentsPage() {
             View learning progress for each student.
           </p>
         </div>
-
-        <Link href="/admin/student_progress" passHref>
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft size={16} /> Back
-          </Button>
-        </Link>
       </div>
 
       {/* ===== Student List ===== */}
