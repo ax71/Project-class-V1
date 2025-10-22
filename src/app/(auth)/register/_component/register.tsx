@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { INITIAL_REGISTER_FORM } from "@/constants/auth-constants";
 import { Button } from "@/components/ui/button";
 import FormInput from "@/components/common/form-input";
-import Link from "next/dist/client/link";
+import Link from "next/link";
 
 export default function Register() {
   const form = useForm<RegisterForm>({

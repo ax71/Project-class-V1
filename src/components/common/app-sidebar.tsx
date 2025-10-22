@@ -34,9 +34,9 @@ import { cn } from "@/lib/utils";
 export function AppSidebar() {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
-  const profile = {
+  const profile= {
     name: "Kadek Buktiasa",
-    role: "user",
+    role: "admin",
     avatar_url: "",
   };
   return (
