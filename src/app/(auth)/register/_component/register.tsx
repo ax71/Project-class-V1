@@ -15,43 +15,69 @@ import { INITIAL_REGISTER_FORM } from "@/constants/auth-constants";
 import { Button } from "@/components/ui/button";
 import FormInput from "@/components/common/form-input";
 import Link from "next/link";
+import { registerUser } from "@/services/auth.service";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Register() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: INITIAL_REGISTER_FORM,
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
-    // masih percobaan, karena bulum ada database
+    try {
+      setLoading(true);
+
+      const payload = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.confirmpassword,
+      };
+
+      const response = await registerUser(payload);
+
+      // console.log("REGISTER SUCCESS:", response);
+      // Bisa diarahkan ke login
+      router.push("/login");
+    } catch (error: any) {
+      console.error("REGISTER ERROR:", error.message);
+    } finally {
+      setLoading(false);
+    }
   });
 
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl ">Welcome</CardTitle>
+        <CardTitle className="text-xl">Welcome</CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          Please login to continue
+          Please register to continue
         </CardDescription>
       </CardHeader>
+
       <CardContent>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4">
             <FormInput
               form={form}
-              type="name"
+              type="text"
               name="name"
               label="Name"
               placeholder="Insert your name"
             />
 
-            <FormInput
+            {/* <FormInput
               form={form}
-              type="username"
+              type="text"
               name="username"
               label="Username"
               placeholder="Insert your username"
-            />
+            /> */}
 
             <FormInput
               form={form}
@@ -77,10 +103,13 @@ export default function Register() {
               placeholder="********"
             />
 
-            <Button type="submit">Register</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Processing..." : "Register"}
+            </Button>
           </form>
         </Form>
-        <p className=" text-sm text-muted-foreground mt-3">
+
+        <p className="text-sm text-muted-foreground mt-3">
           Already have an account?{" "}
           <Link href="/login" className="text-[#69B1F0] hover:underline">
             Log In

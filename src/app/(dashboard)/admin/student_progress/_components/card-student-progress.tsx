@@ -24,24 +24,32 @@ export default function StudentProgressPage() {
       title: "Introduction to Web Design",
       category: "Frontend Development",
       thumbnail: "/course-1.jpg",
+      students: 10,
+      completed: 3,
     },
     {
       id: 2,
       title: "Advanced React Patterns",
       category: "Frontend Development",
       thumbnail: "/course-2.jpg",
+      students: 18,
+      completed: 12,
     },
     {
       id: 3,
       title: "Responsive Layout Techniques",
       category: "UI/UX",
       thumbnail: "/course-3.jpg",
+      students: 30,
+      completed: 22,
     },
     {
       id: 4,
-      title: "Responsive Layout Techniques",
-      category: "UI/UX",
+      title: "Backend Fundamentals",
+      category: "Backend Development",
       thumbnail: "/course-4.jpg",
+      students: 15,
+      completed: 7,
     },
   ];
 
@@ -55,7 +63,7 @@ export default function StudentProgressPage() {
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
+          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
             Student Progress
           </h1>
           <p className="text-gray-500">
@@ -79,38 +87,64 @@ export default function StudentProgressPage() {
       {/* ===== Course Cards ===== */}
       {filteredCourses.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredCourses.map((course) => (
-            <Card
-              key={course.id}
-              className="w-full max-w-md shadow-sm hover:shadow-lg transition cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle>{course.title}</CardTitle>
-                <CardDescription>{course.category}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border border-gray-200 rounded-md overflow-hidden">
-                  <Image
-                    src={course.thumbnail}
-                    alt={course.title}
-                    width={400}
-                    height={250}
-                    className="object-cover w-full h-40"
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between gap-2">
-                <Link href={`/admin/student_progress/student`} passHref>
-                  <Button
-                    size="sm"
-                    className="bg-blue-500 hover:bg-blue-700 text-white flex gap-1"
-                  >
-                    <Users size={16} /> View Students
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
+          {filteredCourses.map((course) => {
+            const progressRatio = course.completed / course.students;
+            const progressPercent = progressRatio * 100;
+
+            return (
+              <Card
+                key={course.id}
+                className="w-full max-w-md shadow-sm hover:shadow-lg transition cursor-pointer"
+              >
+                <CardHeader>
+                  <CardTitle>{course.title}</CardTitle>
+                  <CardDescription>{course.category}</CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="border border-gray-200 rounded-md overflow-hidden">
+                    <Image
+                      src={course.thumbnail}
+                      alt={course.title}
+                      width={400}
+                      height={250}
+                      className="object-cover w-full h-40"
+                    />
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex flex-col gap-3">
+                  {/* Diagram batang progress */}
+                  <div className="w-full">
+                    <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      <span>Progress</span>
+                      <span>
+                        {course.completed}/{course.students} completed
+                      </span>
+                    </div>
+
+                    {/* Bar progress */}
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-[#00A7BD] h-3 transition-all duration-500"
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Tombol */}
+                  <Link href={`/admin/student_progress/student`} passHref>
+                    <Button
+                      size="sm"
+                      className="bg-blue-400 hover:bg-blue-700 text-white flex gap-1 mt-2"
+                    >
+                      <Users size={16} /> View Students
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center text-gray-500 mt-16">

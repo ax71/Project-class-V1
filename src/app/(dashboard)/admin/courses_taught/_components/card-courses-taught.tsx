@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -12,12 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, Edit, Trash2, BookOpen } from "lucide-react";
+import Link from "next/link";
 
 export default function CoursesTaughtPage() {
-  const [search, setSearch] = useState("");
+  const router = useRouter();
 
-  // Data kursus sederhana
-  const courses = [
+  const [search, setSearch] = useState("");
+  const [courses, setCourses] = useState([
     {
       id: 1,
       title: "Introduction to Web Design",
@@ -38,19 +40,38 @@ export default function CoursesTaughtPage() {
     },
     {
       id: 4,
-      title: "Responsive Layout Techniques",
-      category: "UI/UX",
+      title: "Basic Java Script",
+      category: "Programming",
       thumbnail: "/course-4.jpg",
     },
-  ];
+  ]);
 
-  // Filter pencarian berdasarkan judul kursus
+  // === Fungsi hapus kursus ===
+  const handleDelete = (id: number) => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this course?"
+    );
+    if (confirmDelete) {
+      setCourses((prevCourses) =>
+        prevCourses.filter((course) => course.id !== id)
+      );
+      alert("✅ Course deleted successfully (dummy only)");
+    }
+  };
+
+  // === Fungsi Edit (simpan ke localStorage lalu redirect) ===
+  const handleEdit = (course: any) => {
+    localStorage.setItem("editingCourse", JSON.stringify(course));
+    router.push("/edit-course");
+  };
+
+  // === Filter pencarian ===
   const filteredCourses = courses.filter((course) =>
     course.title.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <main className="min-h-screen  p-6">
+    <main className="min-h-screen p-6">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -61,9 +82,13 @@ export default function CoursesTaughtPage() {
             Manage and update the courses you’re teaching.
           </p>
         </div>
-        <Button className="bg-blue-500 hover:bg-blue-700 text-white">
-          + New Course
-        </Button>
+
+        {/* Tombol New Course menuju halaman tambah */}
+        <Link href="/add-course">
+          <Button className="bg-blue-500 hover:bg-blue-700 text-white">
+            + New Course
+          </Button>
+        </Link>
       </div>
 
       {/* ===== Search Bar ===== */}
@@ -90,6 +115,7 @@ export default function CoursesTaughtPage() {
                 <CardTitle>{course.title}</CardTitle>
                 <CardDescription>{course.category}</CardDescription>
               </CardHeader>
+
               <CardContent>
                 <div className="border border-gray-200 rounded-md overflow-hidden">
                   <Image
@@ -101,18 +127,23 @@ export default function CoursesTaughtPage() {
                   />
                 </div>
               </CardContent>
+
+              {/* ===== Footer ===== */}
               <CardFooter className="flex justify-between gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   className="flex items-center gap-1"
+                  onClick={() => handleEdit(course)}
                 >
                   <Edit size={16} /> Edit
                 </Button>
+
                 <Button
                   size="sm"
                   variant="destructive"
                   className="bg-gray-600 text-white flex items-center gap-1"
+                  onClick={() => handleDelete(course.id)}
                 >
                   <Trash2 size={16} /> Delete
                 </Button>

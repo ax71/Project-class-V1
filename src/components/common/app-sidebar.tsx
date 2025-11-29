@@ -36,7 +36,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const profile= {
     name: "Kadek Buktiasa",
-    role: "admin",
+    role: "user",
     avatar_url: "",
   };
   return (
@@ -64,7 +64,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent className="flex flex-col gap-2">
+          <SidebarGroupContent className="flex flex-col-4 gap-2">
             <SidebarMenu>
               {SIDEBAR_MENU_LIST[profile.role as SidebarMenuKey]?.map(
                 (item) => (

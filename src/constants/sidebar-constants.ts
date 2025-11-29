@@ -16,12 +16,12 @@ export const SIDEBAR_MENU_LIST = {
     },
     {
       title: "Progress",
-      url: "/user/progress",
+      url: "/users/progress",
       icon: Activity,
     },
     {
       title: "Certificates",
-      url: "/user/certificates",
+      url: "/users/certificates",
       icon: Album,
     },
   ],
