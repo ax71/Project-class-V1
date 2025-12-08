@@ -5,7 +5,6 @@ export const INITIAL_LOGIN_FORM = {
 
 export const INITIAL_REGISTER_FORM = {
   name: "",
-  username: "",
   email: "",
   password: "",
   confirmpassword: "",

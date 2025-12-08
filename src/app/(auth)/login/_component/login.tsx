@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 export default function Login() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMSG, setErrorMSG] = useState<string | null>(null);
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -31,17 +32,24 @@ export default function Login() {
   const onSubmit = form.handleSubmit(async (data) => {
     try {
       setLoading(true);
+      setErrorMSG(null);
 
-      const res = await loginUser({
+      const user = await loginUser({
         email: data.email,
         password: data.password,
       });
 
-      console.log("LOGIN SUCCESS:", res);
+      if (user.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/users");
+      }
 
-      router.push("/admin");
+      router.refresh();
     } catch (error: any) {
-      console.error("LOGIN ERROR:", error.message);
+      console.log("login error :", error.message);
+
+      setErrorMSG(error.message || "Something went wrong");
     } finally {
       setLoading(false);
     }

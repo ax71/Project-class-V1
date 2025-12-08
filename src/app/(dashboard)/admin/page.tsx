@@ -25,7 +25,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full h-full space-y-10">
-      {/* === Hero Section (kode kamu tetap sama) === */}
       <div className="w-full bg-gradient-to-r from-sky-300 to-sky-400 rounded-lg shadow-md p-8 md:p-12 flex flex-col md:flex-row items-center justify-between">
         <div>
           <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">

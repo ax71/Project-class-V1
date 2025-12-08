@@ -1,6 +1,4 @@
-import { url } from "inspector";
 import { Activity, Album, Book, Users } from "lucide-react";
-import { title } from "process";
 
 export const SIDEBAR_MENU_LIST = {
   user: [
@@ -26,7 +24,6 @@ export const SIDEBAR_MENU_LIST = {
     },
   ],
   
-  teacher: [],
   admin: [
     {
       title: "Dashboard",
