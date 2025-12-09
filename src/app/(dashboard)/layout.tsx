@@ -7,11 +7,26 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DashboardBreadcrumb } from "./_components/dashboard-breadcrumb";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const cookieStore = await cookies();
+  const userCookie = cookieStore.get("user_profile");
+
+  if (!userCookie) {
+    redirect("/login");
+  }
+
+  const user = JSON.parse(userCookie.value);
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset className="overflow-x-hidden">
         <header className="flex items-center justify-between gap-2 h-16 shrink-0 transition-[height,width] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="gap-2 flex items-center px-2">

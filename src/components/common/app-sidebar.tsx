@@ -32,9 +32,19 @@ import {
 } from "@/constants/sidebar-constants";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/AuthContext"; // ← jika kamu pakai AuthContext
+import { useAuth } from "@/context/AuthContext";
 
-export function AppSidebar() {
+interface User {
+  name: string;
+  email: string;
+  avatar_url?: string;
+  role: string;
+}
+
+export function AppSidebar({
+  user,
+  ...props
+}: { user: User } & React.ComponentProps<typeof Sidebar>) {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
@@ -48,8 +58,6 @@ export function AppSidebar() {
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "null")
       : null;
-
-  const user = contextUser || localUser;
 
   const name = user?.name ?? "Guest";
   const role = (user?.role ?? "user") as SidebarMenuKey;
