@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -12,55 +12,60 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Edit, Trash2, BookOpen } from "lucide-react";
+import { Search, Edit, Trash2, BookOpen, Plus } from "lucide-react";
 import Link from "next/link";
+import { courseService } from "@/services/course.service";
+import { Course } from "@/types/api";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import ErrorMessage from "@/components/common/ErrorMessage";
 
 export default function CoursesTaughtPage() {
   const router = useRouter();
 
   const [search, setSearch] = useState("");
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      title: "Introduction to Web Design",
-      category: "Design",
-      thumbnail: "/course-1.jpg",
-    },
-    {
-      id: 2,
-      title: "Basic HTML & CSS",
-      category: "Programming",
-      thumbnail: "/course-2.jpg",
-    },
-    {
-      id: 3,
-      title: "Responsive Layout Techniques",
-      category: "UI/UX",
-      thumbnail: "/course-3.jpg",
-    },
-    {
-      id: 4,
-      title: "Basic Java Script",
-      category: "Programming",
-      thumbnail: "/course-4.jpg",
-    },
-  ]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await courseService.getAllCourses();
+      setCourses(data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   // === Fungsi hapus kursus ===
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     const confirmDelete = confirm(
       "Are you sure you want to delete this course?"
     );
     if (confirmDelete) {
-      setCourses((prevCourses) =>
-        prevCourses.filter((course) => course.id !== id)
-      );
-      alert("✅ Course deleted successfully (dummy only)");
+      try {
+        await courseService.deleteCourse(id);
+        setCourses((prevCourses) =>
+          prevCourses.filter((course) => course.id !== id)
+        );
+        alert("✅ Course deleted successfully");
+      } catch (err: any) {
+        alert(
+          `Failed to delete course: ${err.response?.data?.message || err.message}`
+        );
+      }
     }
   };
 
   // === Fungsi Edit (simpan ke localStorage lalu redirect) ===
-  const handleEdit = (course: any) => {
+  const handleEdit = (course: Course) => {
     localStorage.setItem("editingCourse", JSON.stringify(course));
     router.push("/edit-course");
   };
@@ -70,23 +75,32 @@ export default function CoursesTaughtPage() {
     course.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (loading) {
+    return <LoadingSpinner size="lg" text="Loading courses..." />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={fetchCourses} />;
+  }
+
   return (
     <main className="min-h-screen p-6">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
+          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
             Courses Taught
           </h1>
           <p className="text-gray-500">
-            Manage and update the courses you’re teaching.
+            Manage and update the courses you're teaching.
           </p>
         </div>
 
         {/* Tombol New Course menuju halaman tambah */}
         <Link href="/add-course">
-          <Button className="bg-blue-500 hover:bg-blue-700 text-white">
-            + New Course
+          <Button className="bg-blue-500 hover:bg-blue-700 text-white flex items-center gap-2">
+            <Plus size={18} />
+            New Course
           </Button>
         </Link>
       </div>
@@ -99,7 +113,7 @@ export default function CoursesTaughtPage() {
           placeholder="Search courses..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
         />
       </div>
 
@@ -113,13 +127,15 @@ export default function CoursesTaughtPage() {
             >
               <CardHeader>
                 <CardTitle>{course.title}</CardTitle>
-                <CardDescription>{course.category}</CardDescription>
+                <CardDescription className="line-clamp-2">
+                  {course.description}
+                </CardDescription>
               </CardHeader>
 
               <CardContent>
                 <div className="border border-gray-200 rounded-md overflow-hidden">
                   <Image
-                    src={course.thumbnail}
+                    src={course.thumbnail || "/course-1.jpg"}
                     alt={course.title}
                     width={400}
                     height={250}
@@ -142,7 +158,7 @@ export default function CoursesTaughtPage() {
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="bg-gray-600 text-white flex items-center gap-1"
+                  className="bg-red-600 text-white flex items-center gap-1"
                   onClick={() => handleDelete(course.id)}
                 >
                   <Trash2 size={16} /> Delete
