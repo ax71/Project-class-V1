@@ -18,6 +18,7 @@ import Link from "next/link";
 import { loginUser } from "@/services/auth.service";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
@@ -44,19 +45,16 @@ export default function Login() {
       const userData = response.data;
 
       if (!accessToken) {
-        throw new Error("Laravel tidak mengirimkan Token!");
+        throw new Error("Server did not return an authentication token");
       }
 
-      // 3. Simpan Token ke Cookie (Agar Middleware Next.js bisa baca)
-      document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
-
-      // Simpan data user untuk pengecekan role
+      // Save Token to Cookie
       document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
       document.cookie = `user_profile=${JSON.stringify(
         userData
       )}; path=/; max-age=86400; SameSite=Lax`;
 
-      // 4. Redirect
+      // Redirect based on role
       if (userData.role === "admin") {
         window.location.href = "/admin";
       } else {
@@ -64,7 +62,21 @@ export default function Login() {
       }
     } catch (error: any) {
       console.error("Login Error:", error);
-      setErrorMSG(error.message || "Gagal menghubungi server");
+      
+      // User-friendly error messages
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message.includes("Network") || error.message.includes("fetch")) {
+        errorMessage = "Unable to connect to the server. Please check your internet connection.";
+      } else if (error.message.includes("422")) {
+        errorMessage = "Please check your input and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setErrorMSG(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,6 +94,21 @@ export default function Login() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4">
+            {/* Error Alert */}
+            {errorMSG && (
+              <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Login Failed
+                  </p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    {errorMSG}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <FormInput
               form={form}
               type="email"
@@ -98,14 +125,14 @@ export default function Login() {
               placeholder="********"
             />
 
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Processing..." : "Login"}
             </Button>
           </form>
         </Form>
 
-        <p className="text-sm text-muted-foreground mt-3">
-          Don’t have an account?{" "}
+        <p className="text-sm text-muted-foreground mt-3 text-center">
+          Don't have an account?{" "}
           <Link href="/register" className="text-[#69B1F0] hover:underline">
             Register
           </Link>

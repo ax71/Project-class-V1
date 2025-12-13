@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Edit, Trash2, BookOpen, Plus } from "lucide-react";
+import { Search, Edit, Trash2, BookOpen, Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { courseService } from "@/services/course.service";
 import { Course } from "@/types/api";
@@ -145,24 +145,50 @@ export default function CoursesTaughtPage() {
               </CardContent>
 
               {/* ===== Footer ===== */}
-              <CardFooter className="flex justify-between gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center gap-1"
-                  onClick={() => handleEdit(course)}
-                >
-                  <Edit size={16} /> Edit
-                </Button>
+              <CardFooter className="flex flex-col gap-2">
+                <div className="flex justify-between gap-2 w-full">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1 flex-1"
+                    onClick={() =>
+                      router.push(`/admin/courses_taught/${course.id}/materials`)
+                    }
+                  >
+                    <FileText size={16} /> Materials
+                  </Button>
 
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="bg-red-600 text-white flex items-center gap-1"
-                  onClick={() => handleDelete(course.id)}
-                >
-                  <Trash2 size={16} /> Delete
-                </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1 flex-1"
+                    onClick={() =>
+                      router.push(`/admin/courses_taught/${course.id}/quizzes`)
+                    }
+                  >
+                    <BookOpen size={16} /> Quizzes
+                  </Button>
+                </div>
+
+                <div className="flex justify-between gap-2 w-full">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1"
+                    onClick={() => handleEdit(course)}
+                  >
+                    <Edit size={16} /> Edit
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="bg-red-600 text-white flex items-center gap-1"
+                    onClick={() => handleDelete(course.id)}
+                  >
+                    <Trash2 size={16} /> Delete
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           ))}
