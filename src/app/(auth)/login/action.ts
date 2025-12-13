@@ -54,6 +54,7 @@ export async function login(
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 hari
     });
+
     cookiesStore.set("user_profile", JSON.stringify(user), {
       httpOnly: false,
       path: "/",

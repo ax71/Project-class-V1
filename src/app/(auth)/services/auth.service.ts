@@ -1,17 +1,23 @@
-import { LoginForm } from "@/validations/auth-validation";
-import axiosInstance from "@/lib/axios";
-import Cookies from "js-cookie";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-export const loginUser = async (payload: LoginForm) => {
-  try {
-    const response = await axiosInstance.post("login", payload);
+export const loginUser = async ({ email, password }: any) => {
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
 
-    const { access_token, data: user } = response.data;
+  const data = await res.json();
 
-    Cookies.set("token", access_token, { expires: 7 });
-    Cookies.set("user_profile", JSON.stringify(user), { expires: 7 });
-  } catch (error: any) {
-    const message = error.response?.data?.message || "Login Faild";
-    throw new Error(message);
+  if (!res.ok) {
+    throw new Error(data.message || "Login gagal di sisi Server");
   }
+
+  return data;
 };

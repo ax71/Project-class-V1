@@ -29,27 +29,42 @@ export default function Login() {
     defaultValues: INITIAL_LOGIN_FORM,
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
+  const onSubmit = form.handleSubmit(async (formData) => {
     try {
       setLoading(true);
       setErrorMSG(null);
-
-      const user = await loginUser({
-        email: data.email,
-        password: data.password,
+      
+      const response = await loginUser({
+        email: formData.email,
+        password: formData.password,
       });
 
-      if (user.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/users");
+      console.log("🔥 Respon Laravel:", response);
+      const accessToken = response.access_token;
+      const userData = response.data;
+
+      if (!accessToken) {
+        throw new Error("Laravel tidak mengirimkan Token!");
       }
 
-      router.refresh();
-    } catch (error: any) {
-      console.log("login error :", error.message);
+      // 3. Simpan Token ke Cookie (Agar Middleware Next.js bisa baca)
+      document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
 
-      setErrorMSG(error.message || "Something went wrong");
+      // Simpan data user untuk pengecekan role
+      document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
+      document.cookie = `user_profile=${JSON.stringify(
+        userData
+      )}; path=/; max-age=86400; SameSite=Lax`;
+
+      // 4. Redirect
+      if (userData.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/users";
+      }
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      setErrorMSG(error.message || "Gagal menghubungi server");
     } finally {
       setLoading(false);
     }

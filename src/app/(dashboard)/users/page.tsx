@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { BookOpen, Trophy, CheckCircle, Layers } from "lucide-react";
 
 export default function UserDashboard() {
-  // Dummy data course
   const recentCourses = [
     {
       id: 1,
@@ -30,7 +29,6 @@ export default function UserDashboard() {
 
   return (
     <div className="w-full h-full space-y-10">
-      {/* === HERO SECTION (kode kamu tetap ===) */}
       <div className="w-full bg-gradient-to-r from-sky-300 to-sky-400 rounded-lg shadow-md p-8 md:p-12 flex flex-col md:flex-row items-center justify-between">
         <div>
           <h1 className="mt-9 text-4xl md:text-5xl font-bold text-black mb-4">

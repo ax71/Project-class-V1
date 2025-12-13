@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function CertificateCard() {
@@ -13,11 +12,9 @@ export default function CertificateCard() {
     const input = certificateRef.current;
     if (!input) return;
 
-    // Ambil tampilan elemen jadi gambar
     const canvas = await html2canvas(input, { scale: 2 });
     const imgData = canvas.toDataURL("image/png");
 
-    // Buat PDF
     const pdf = new jsPDF("landscape", "pt", "a4");
     const imgWidth = 800;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -27,7 +24,6 @@ export default function CertificateCard() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 space-y-6">
-      {/* Sertifikat */}
       <div
         ref={certificateRef}
         className="bg-white border-4 border-yellow-400 shadow-lg rounded-xl w-[800px] h-[550px] flex flex-col items-center justify-center text-center p-10"
@@ -54,7 +50,6 @@ export default function CertificateCard() {
         </div>
       </div>
 
-      {/* Tombol Download */}
       <Button
         onClick={handleDownload}
         className="bg-blue-600 text-white hover:bg-blue-700"
