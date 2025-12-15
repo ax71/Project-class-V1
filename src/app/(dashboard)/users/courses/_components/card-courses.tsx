@@ -76,7 +76,6 @@ export default function CourseCard() {
           key={course.id}
           className="w-full max-w-md h-auto hover:shadow-md transition-all duration-300"
         >
-          {/* ===== Header ===== */}
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
               {course.title}
@@ -86,7 +85,6 @@ export default function CourseCard() {
             </CardDescription>
           </CardHeader>
 
-          {/* ===== Image ===== */}
           <CardContent>
             <div className="flex flex-col items-center justify-center">
               <div className="border border-gray-200 rounded-md overflow-hidden w-full">

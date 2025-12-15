@@ -30,7 +30,7 @@ export default function Login() {
     defaultValues: INITIAL_LOGIN_FORM,
   });
 
-  const onSubmit = form.handleSubmit(async (formData) => {
+const onSubmit = form.handleSubmit(async (formData) => {
     try {
       setLoading(true);
       setErrorMSG(null);
@@ -41,37 +41,36 @@ export default function Login() {
       });
 
       console.log("🔥 Respon Laravel:", response);
-      const accessToken = response.access_token;
-      const userData = response.data;
+
+      const accessToken = response.data.access_token;
+      const userData = response.data.user;
 
       if (!accessToken) {
         throw new Error("Server did not return an authentication token");
       }
 
-      // Save Token to Cookie
       document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
       document.cookie = `user_profile=${JSON.stringify(
         userData
       )}; path=/; max-age=86400; SameSite=Lax`;
 
-      // Redirect based on role
-      if (userData.role === "admin") {
-        window.location.href = "/admin";
+      if (userData?.role === "admin") {
+        router.push("/admin");
       } else {
-        window.location.href = "/users";
+        router.push("/users");
       }
+      
+      router.refresh(); 
+
     } catch (error: any) {
       console.error("Login Error:", error);
       
-      // User-friendly error messages
       let errorMessage = "An unexpected error occurred. Please try again.";
       
-      if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+      if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
         errorMessage = "Invalid email or password. Please check your credentials and try again.";
-      } else if (error.message.includes("Network") || error.message.includes("fetch")) {
+      } else if (error.message?.includes("Network") || error.message?.includes("fetch")) {
         errorMessage = "Unable to connect to the server. Please check your internet connection.";
-      } else if (error.message.includes("422")) {
-        errorMessage = "Please check your input and try again.";
       } else if (error.message) {
         errorMessage = error.message;
       }

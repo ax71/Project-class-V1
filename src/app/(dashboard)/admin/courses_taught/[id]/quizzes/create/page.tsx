@@ -28,7 +28,7 @@ export default function CreateQuizPage() {
   const courseId = Number(params.id);
 
   const [quizTitle, setQuizTitle] = useState("");
-  const [passingScore, setPassingScore] = useState(70);
+  const [quizDescription, setQuizDescription] = useState("");
   const [questions, setQuestions] = useState<QuestionData[]>([
     {
       question_text: "",
@@ -137,12 +137,13 @@ export default function CreateQuizPage() {
       const quiz = await quizService.createQuiz({
         course_id: courseId,
         title: quizTitle,
-        passing_score: passingScore,
+        description: quizDescription || "Quiz for this course",
       });
 
       // Create questions
       for (const question of questions) {
-        await quizService.createQuestion(quiz.id, {
+        await quizService.createQuestion({
+          quiz_id: quiz.id,
           question_text: question.question_text,
           answers: question.answers,
         });
@@ -192,14 +193,12 @@ export default function CreateQuizPage() {
               />
             </div>
             <div>
-              <Label htmlFor="passing_score">Passing Score (%)</Label>
+              <Label htmlFor="description">Description (Optional)</Label>
               <Input
-                id="passing_score"
-                type="number"
-                min="0"
-                max="100"
-                value={passingScore}
-                onChange={(e) => setPassingScore(Number(e.target.value))}
+                id="description"
+                value={quizDescription}
+                onChange={(e) => setQuizDescription(e.target.value)}
+                placeholder="Enter quiz description"
                 disabled={loading}
               />
             </div>

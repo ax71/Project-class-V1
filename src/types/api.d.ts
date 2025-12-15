@@ -25,6 +25,8 @@ export interface Course {
   thumbnail?: string;
   created_at: string;
   updated_at: string;
+  materials?: Material[];
+  quizzes?: Quiz[];
 }
 
 export interface Material {

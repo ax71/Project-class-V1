@@ -33,7 +33,6 @@ export default function UserDashboard() {
         setProgress(progressData);
         setCertificates(certificatesData);
 
-        // Get user name from localStorage
         const userStr = localStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
@@ -59,7 +58,6 @@ export default function UserDashboard() {
         )
       : 0;
 
-  // Get recently viewed courses (first 3 with progress)
   const recentCourses = progress
     .slice(0, 3)
     .map((p) => ({
@@ -95,7 +93,6 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* === QUICK STATS SECTION === */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="shadow-sm border-t-4 border-blue-400">
           <CardHeader>

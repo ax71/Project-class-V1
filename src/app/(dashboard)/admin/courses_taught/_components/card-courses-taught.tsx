@@ -85,18 +85,16 @@ export default function CoursesTaughtPage() {
 
   return (
     <main className="min-h-screen p-6">
-      {/* ===== Header ===== */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
             Courses Taught
           </h1>
           <p className="text-gray-500">
-            Manage and update the courses you're teaching.
+            Manage and update the courses you are teaching.
           </p>
         </div>
 
-        {/* Tombol New Course menuju halaman tambah */}
         <Link href="/add-course">
           <Button className="bg-blue-500 hover:bg-blue-700 text-white flex items-center gap-2">
             <Plus size={18} />
@@ -105,7 +103,6 @@ export default function CoursesTaughtPage() {
         </Link>
       </div>
 
-      {/* ===== Search Bar ===== */}
       <div className="relative w-full md:w-1/3 mb-8">
         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
         <input
@@ -117,7 +114,6 @@ export default function CoursesTaughtPage() {
         />
       </div>
 
-      {/* ===== Course Cards ===== */}
       {filteredCourses.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredCourses.map((course) => (
@@ -144,7 +140,6 @@ export default function CoursesTaughtPage() {
                 </div>
               </CardContent>
 
-              {/* ===== Footer ===== */}
               <CardFooter className="flex flex-col gap-2">
                 <div className="flex justify-between gap-2 w-full">
                   <Button

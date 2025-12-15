@@ -71,6 +71,7 @@ export default function MaterialViewerPage() {
   }
 
   const fileUrl = materialService.getMaterialUrl(material.file_path);
+  console.log("URL File:", fileUrl);
 
   return (
     <div className="w-full space-y-6">
@@ -98,7 +99,6 @@ export default function MaterialViewerPage() {
         </CardHeader>
       </Card>
 
-      {/* Material Viewer */}
       <Card>
         <CardContent className="p-0">
           {material.content_type === "pdf" ? (

@@ -130,8 +130,10 @@ export default function QuizzesManagementPage() {
                     <div>
                       <CardTitle className="text-lg">{quiz.title}</CardTitle>
                       <p className="text-sm text-gray-500 mt-1">
-                        {quiz.questions?.length || 0} questions • Passing score:{" "}
-                        {quiz.passing_score}%
+                        {quiz.description}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {quiz.questions?.length || 0} questions
                       </p>
                     </div>
                   </div>

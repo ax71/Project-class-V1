@@ -46,11 +46,13 @@ export default function CardProgress() {
 
   if (progressData.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 w-full">
+        <div className="flex flex-col items-center align-center justify-center">
         <BookOpen size={48} className="mx-auto mb-3 text-gray-400" />
         <p className="text-gray-500">
           No progress data available. Start learning to track your progress!
         </p>
+        </div>
       </div>
     );
   }

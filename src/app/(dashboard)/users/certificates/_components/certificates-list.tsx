@@ -53,17 +53,19 @@ export default function CertificateCard() {
 
   if (certificates.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 w-full h-full">
+        <div className="flex flex-col items-center align-center justify-center">
         <Award size={48} className="mx-auto mb-3 text-gray-400" />
         <p className="text-gray-500">
           No certificates yet. Complete courses to earn certificates!
         </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
         Your Certificates
       </h1>

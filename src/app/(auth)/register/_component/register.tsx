@@ -42,6 +42,7 @@ export default function Register() {
         email: data.email,
         password: data.password,
         password_confirmation: data.confirmpassword,
+        role: "user" as const, // Default role for new registrations
       };
 
       const response = await registerUser(payload);
