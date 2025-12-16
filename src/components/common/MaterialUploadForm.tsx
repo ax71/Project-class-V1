@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -43,7 +38,13 @@ export default function MaterialUploadForm() {
 
     // Validate file size
     if (selectedFile.size > MAX_FILE_SIZE) {
-      setError(`File size must be less than 50MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB`);
+      setError(
+        `File size must be less than 50MB. Your file is ${(
+          selectedFile.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB`
+      );
       setFile(null);
       return;
     }
@@ -100,7 +101,7 @@ export default function MaterialUploadForm() {
       setUploadProgress(100);
 
       alert("✅ Material uploaded successfully!");
-      router.push(`/admin/courses_taught/${courseId}/materials`);
+      router.push(`/admin/courses/${courseId}/materials`);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to upload material");
       setUploadProgress(0);
@@ -165,9 +166,7 @@ export default function MaterialUploadForm() {
 
           {/* File Upload */}
           <div>
-            <Label htmlFor="file">
-              Select File (Max 50MB)
-            </Label>
+            <Label htmlFor="file">Select File (Max 50MB)</Label>
             <div className="mt-2">
               <label
                 htmlFor="file"
@@ -190,18 +189,15 @@ export default function MaterialUploadForm() {
                   type="file"
                   className="hidden"
                   onChange={handleFileChange}
-                  accept={
-                    formData.content_type === "pdf"
-                      ? ".pdf"
-                      : "video/*"
-                  }
+                  accept={formData.content_type === "pdf" ? ".pdf" : "video/*"}
                   disabled={loading}
                 />
               </label>
             </div>
             {file && (
               <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                ✓ Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                ✓ Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)}
+                MB)
               </p>
             )}
           </div>

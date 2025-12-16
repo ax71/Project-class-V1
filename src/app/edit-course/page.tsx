@@ -42,7 +42,7 @@ export default function EditCoursePage() {
       localStorage.removeItem("editingCourse");
     } else {
       alert("No course selected for editing");
-      router.push("/admin/courses_taught");
+      router.push("/admin/courses");
     }
     setInitialLoading(false);
   }, [router]);
@@ -64,7 +64,7 @@ export default function EditCoursePage() {
     try {
       await courseService.updateCourse(courseId, formData);
       alert(`✅ Course "${formData.title}" updated successfully!`);
-      router.push("/admin/courses_taught");
+      router.push("/admin/courses");
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update course");
       alert(`❌ Error: ${err.response?.data?.message || err.message}`);
@@ -81,9 +81,7 @@ export default function EditCoursePage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">
-            Edit Course
-          </CardTitle>
+          <CardTitle className="text-xl font-semibold">Edit Course</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -127,7 +125,7 @@ export default function EditCoursePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/admin/courses_taught")}
+                onClick={() => router.push("/admin/courses")}
                 disabled={loading}
               >
                 Cancel

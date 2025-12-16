@@ -3,25 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { quizService } from "@/services/quiz.service";
 import { courseService } from "@/services/course.service";
 import { Quiz, Course } from "@/types/api";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import ErrorMessage from "@/components/common/ErrorMessage";
-import {
-  FileQuestion,
-  Trash2,
-  Plus,
-  ArrowLeft,
-  Edit,
-} from "lucide-react";
+import { FileQuestion, Trash2, Plus, ArrowLeft, Edit } from "lucide-react";
 
 export default function QuizzesManagementPage() {
   const params = useParams();
@@ -81,7 +70,7 @@ export default function QuizzesManagementPage() {
         <div>
           <Button
             variant="ghost"
-            onClick={() => router.push("/admin/courses_taught")}
+            onClick={() => router.push("/admin/courses")}
             className="flex items-center gap-2 mb-2"
           >
             <ArrowLeft size={16} />
@@ -94,7 +83,7 @@ export default function QuizzesManagementPage() {
         </div>
         <Button
           onClick={() =>
-            router.push(`/admin/courses_taught/${courseId}/quizzes/create`)
+            router.push(`/admin/courses/${courseId}/quizzes/create`)
           }
           className="bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
         >
@@ -111,7 +100,7 @@ export default function QuizzesManagementPage() {
             <p className="text-gray-500 mb-4">No quizzes created yet</p>
             <Button
               onClick={() =>
-                router.push(`/admin/courses_taught/${courseId}/quizzes/create`)
+                router.push(`/admin/courses/${courseId}/quizzes/create`)
               }
               className="bg-blue-500 hover:bg-blue-600"
             >
@@ -143,7 +132,7 @@ export default function QuizzesManagementPage() {
                       size="sm"
                       onClick={() =>
                         router.push(
-                          `/admin/courses_taught/${courseId}/quizzes/${quiz.id}/edit`
+                          `/admin/courses/${courseId}/quizzes/${quiz.id}/edit`
                         )
                       }
                       className="flex items-center gap-1"

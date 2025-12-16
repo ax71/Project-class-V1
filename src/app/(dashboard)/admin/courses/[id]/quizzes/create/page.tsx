@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { quizService } from "@/services/quiz.service";
@@ -150,7 +145,7 @@ export default function CreateQuizPage() {
       }
 
       alert("✅ Quiz created successfully!");
-      router.push(`/admin/courses_taught/${courseId}/quizzes`);
+      router.push(`/admin/courses/${courseId}/quizzes`);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create quiz");
     } finally {
@@ -163,7 +158,7 @@ export default function CreateQuizPage() {
       <div>
         <Button
           variant="ghost"
-          onClick={() => router.push(`/admin/courses_taught/${courseId}/quizzes`)}
+          onClick={() => router.push(`/admin/courses/${courseId}/quizzes`)}
           className="flex items-center gap-2 mb-2"
         >
           <ArrowLeft size={16} />

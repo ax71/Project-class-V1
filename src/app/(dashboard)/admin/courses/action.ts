@@ -9,18 +9,15 @@ export async function getCourse() {
 
     if (!token) return null;
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/courses_taught`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
     if (res.status === 401) {
       return null;

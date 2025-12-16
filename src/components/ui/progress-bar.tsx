@@ -1,61 +1,72 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
-  percentage: number;
-  completed: number;
-  total: number;
+  percentage?: number; // Tambahkan '?' agar opsional
+  total?: number;
+  completed?: number;
   showDetails?: boolean;
   size?: "sm" | "md" | "lg";
+  className?: string;
+  // indicatorClassName?: string; // (Opsional: jika Anda pakai ini sebelumnya)
 }
 
-export function ProgressBar({
-  percentage,
-  completed,
+export const ProgressBar = ({
+  percentage = 0, // Default value 0 jika tidak dikirim
   total,
+  completed,
   showDetails = true,
   size = "md",
-}: ProgressBarProps) {
-  const heightClass = {
-    sm: "h-1.5",
-    md: "h-2.5",
-    lg: "h-3",
-  }[size];
+  className,
+}: ProgressBarProps) => {
+  // Pastikan value valid angka
+  const safePercentage = typeof percentage === "number" ? percentage : 0;
 
-  const textSizeClass = {
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-base",
-  }[size];
-
-  // Determine color based on percentage
-  const getColor = () => {
-    if (percentage === 100) return "bg-green-600";
-    if (percentage >= 70) return "bg-blue-600";
-    if (percentage >= 40) return "bg-yellow-500";
-    return "bg-gray-400";
-  };
+  // Logika ukuran tinggi bar
+  const heightClass = size === "sm" ? "h-1.5" : size === "lg" ? "h-4" : "h-2.5";
+  const textSizeClass = size === "sm" ? "text-xs" : "text-sm";
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between mb-1">
-        <span className={`${textSizeClass} font-medium text-gray-700 dark:text-gray-300`}>
-          Progress
-        </span>
-        <span className={`${textSizeClass} font-medium text-gray-700 dark:text-gray-300`}>
-          {percentage.toFixed(0)}%
-        </span>
-      </div>
-      <div className={`w-full bg-gray-200 dark:bg-gray-700 rounded-full ${heightClass}`}>
+    <div className={cn("w-full", className)}>
+      {showDetails && (
+        <div className="flex justify-between mb-1">
+          <span
+            className={cn(
+              "font-medium text-gray-700 dark:text-gray-300",
+              textSizeClass
+            )}
+          >
+            Progress
+          </span>
+          <span
+            className={cn(
+              "font-medium text-gray-700 dark:text-gray-300",
+              textSizeClass
+            )}
+          >
+            {/* PERBAIKAN DI SINI: Gunakan safePercentage */}
+            {safePercentage.toFixed(0)}%
+          </span>
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden",
+          heightClass
+        )}
+      >
         <div
-          className={`${getColor()} ${heightClass} rounded-full transition-all duration-300 ease-in-out`}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
+          className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-in-out"
+          style={{ width: `${safePercentage}%` }}
         />
       </div>
-      {showDetails && (
-        <p className={`${textSizeClass} text-gray-500 dark:text-gray-400 mt-1`}>
+
+      {showDetails && total !== undefined && completed !== undefined && (
+        <p className="text-xs text-gray-500 mt-1 text-right">
           {completed} of {total} items completed
         </p>
       )}
     </div>
   );
-}
+};

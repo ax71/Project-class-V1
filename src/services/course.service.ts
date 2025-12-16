@@ -37,7 +37,9 @@ export const courseService = {
   },
 
   async getEnrolledCourses(): Promise<Course[]> {
-    const response = await apiClient.get<{ data: Course[] }>("/courses");
+    const response = await apiClient.get<{ data: Course[] }>(
+      "/progress-summary"
+    );
     return response.data.data || response.data;
   },
 

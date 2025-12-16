@@ -40,7 +40,7 @@ export default function AddCoursePage() {
     try {
       await courseService.createCourse(formData);
       alert(`✅ Course "${formData.title}" created successfully!`);
-      router.push("/admin/courses_taught");
+      router.push("/admin/courses");
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create course");
       alert(`❌ Error: ${err.response?.data?.message || err.message}`);
@@ -99,7 +99,7 @@ export default function AddCoursePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/admin/courses_taught")}
+                onClick={() => router.push("/admin/courses")}
                 disabled={loading}
               >
                 Cancel

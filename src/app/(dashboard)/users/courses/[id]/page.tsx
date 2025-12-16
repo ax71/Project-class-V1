@@ -37,7 +37,16 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [progress, setProgress] = useState<ProgressType | null>(null);
+
+  // New State Logic
+  const [overallProgress, setOverallProgress] = useState(0);
+  const [completedMaterialIds, setCompletedMaterialIds] = useState<Set<number>>(
+    new Set()
+  );
+  const [completedQuizIds, setCompletedQuizIds] = useState<Set<number>>(
+    new Set()
+  );
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,21 +54,42 @@ export default function CourseDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      const [courseData, materialsData, quizzesData, progressData] =
-        await Promise.all([
-          courseService.getCourseById(courseId),
-          materialService.getMaterialsByCourse(courseId),
-          quizService.getQuizzesByCourse(courseId),
-          progressService
-            .getUserProgress()
-            .then((data) => data.find((p) => p.course_id === courseId) || null)
-            .catch(() => null),
-        ]);
+      const [
+        courseData,
+        materialsData,
+        quizzesData,
+        progressSummary,
+        userProgress,
+      ] = await Promise.all([
+        courseService.getCourseById(courseId),
+        materialService.getMaterialsByCourse(courseId),
+        quizService.getQuizzesByCourse(courseId),
+        progressService.getProgressSummary(),
+        progressService.getUserProgress(),
+      ]);
 
       setCourse(courseData);
       setMaterials(materialsData);
       setQuizzes(quizzesData);
-      setProgress(progressData);
+
+      // 1. Set Overall Percentage from Summary
+      const courseSummary = progressSummary.find((p: any) => p.id === courseId);
+      setOverallProgress(courseSummary?.percentage || 0);
+
+      // 2. Set Completed Item IDs for Checkmarks
+      const completedMaterials = new Set(
+        userProgress
+          .filter((p) => p.course_id === courseId && p.material_id)
+          .map((p) => p.material_id!) // Assert not null because filtered
+      );
+      setCompletedMaterialIds(completedMaterials);
+
+      const completedQuizzes = new Set(
+        userProgress
+          .filter((p) => p.course_id === courseId && p.quiz_id)
+          .map((p) => p.quiz_id!) // Assert not null because filtered
+      );
+      setCompletedQuizIds(completedQuizzes);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load course details");
     } finally {
@@ -115,12 +145,9 @@ export default function CourseDetailPage() {
               </CardDescription>
               <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-2">Your Progress</p>
-                <Progress
-                  value={progress?.percentage || 0}
-                  className="w-full"
-                />
+                <Progress value={overallProgress} className="w-full" />
                 <p className="text-sm text-gray-500 mt-1">
-                  {progress?.percentage || 0}% Complete
+                  {overallProgress}% Complete
                 </p>
               </div>
             </div>
@@ -143,26 +170,52 @@ export default function CourseDetailPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {materials.map((material) => (
-                <Link
-                  key={material.id}
-                  href={`/users/courses/${courseId}/materials/${material.id}`}
-                >
-                  <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer">
-                    {material.content_type === "pdf" ? (
-                      <FileText className="text-red-500" size={24} />
-                    ) : (
-                      <Video className="text-blue-500" size={24} />
-                    )}
-                    <div className="flex-1">
-                      <h4 className="font-medium">{material.title}</h4>
-                      <p className="text-sm text-gray-500 capitalize">
-                        {material.content_type}
-                      </p>
+              {materials.map((material) => {
+                const isCompleted = completedMaterialIds.has(material.id);
+                return (
+                  <Link
+                    key={material.id}
+                    href={`/users/courses/${courseId}/materials/${material.id}`}
+                  >
+                    <div
+                      className={`flex items-center gap-3 p-4 border rounded-lg transition cursor-pointer ${
+                        isCompleted
+                          ? "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800"
+                          : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {material.content_type === "pdf" ? (
+                        <FileText
+                          className={
+                            isCompleted ? "text-green-500" : "text-red-500"
+                          }
+                          size={24}
+                        />
+                      ) : (
+                        <Video
+                          className={
+                            isCompleted ? "text-green-500" : "text-blue-500"
+                          }
+                          size={24}
+                        />
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-medium flex items-center gap-2">
+                          {material.title}
+                          {isCompleted && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                              Completed
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-sm text-gray-500 capitalize">
+                          {material.content_type}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -183,22 +236,46 @@ export default function CourseDetailPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {quizzes.map((quiz) => (
-                <div
-                  key={quiz.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div>
-                    <h4 className="font-medium">{quiz.title}</h4>
-                    <p className="text-sm text-gray-500">{quiz.description}</p>
+              {quizzes.map((quiz) => {
+                const isCompleted = completedQuizIds.has(quiz.id);
+                return (
+                  <div
+                    key={quiz.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg ${
+                      isCompleted
+                        ? "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800"
+                        : ""
+                    }`}
+                  >
+                    <div>
+                      <h4 className="font-medium flex items-center gap-2">
+                        {quiz.title}
+                        {isCompleted && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                            Completed
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {quiz.description}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/users/courses/${courseId}/quizzes/${quiz.id}`}
+                    >
+                      <Button
+                        className={
+                          isCompleted
+                            ? "bg-green-600 hover:bg-green-700"
+                            : "bg-green-500 hover:bg-green-600"
+                        }
+                      >
+                        {isCompleted ? "Retake Quiz" : "Take Quiz"}
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href={`/users/courses/${courseId}/quizzes/${quiz.id}`}>
-                    <Button className="bg-green-500 hover:bg-green-600">
-                      Take Quiz
-                    </Button>
-                  </Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

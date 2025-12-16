@@ -1,6 +1,5 @@
 import Cookies from "js-cookie";
 
-// Kita definisikan Base URL agar tidak berulang
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 export async function registerUser(payload: {
@@ -25,14 +24,12 @@ export async function registerUser(payload: {
     throw new Error(json.message || "Failed to register");
   }
 
-  // PERBAIKAN: Sesuai Docs v2.0, token ada di json.data.access_token
   const responseData = json.data;
 
   if (responseData?.access_token) {
     Cookies.set("token", responseData.access_token, { expires: 7 });
   }
 
-  // PERBAIKAN: User ada di json.data.user
   if (responseData?.user) {
     Cookies.set("user_profile", JSON.stringify(responseData.user), {
       expires: 7,
@@ -59,7 +56,6 @@ export async function loginUser(payload: { email: string; password: string }) {
     throw new Error(json.message || "Login failed");
   }
 
-  // PERBAIKAN: Unwrapping data sesuai Docs v2.0
   const responseData = json.data;
 
   if (responseData?.access_token) {
@@ -79,8 +75,6 @@ export async function loginUser(payload: { email: string; password: string }) {
 export async function logoutUser() {
   const token = Cookies.get("token");
 
-  // Kita tetap hapus data di browser meskipun token tidak ada / request gagal
-  // agar user tidak terjebak di state login palsu.
   const clearLocalData = () => {
     Cookies.remove("token");
     Cookies.remove("user_profile");
@@ -109,7 +103,6 @@ export async function logoutUser() {
   } catch (error) {
     console.error("Logout connection error", error);
   } finally {
-    // Selalu hapus data lokal apa pun hasil dari server
     clearLocalData();
   }
 }
@@ -118,11 +111,9 @@ export async function getCurrentUser() {
   const token = Cookies.get("token");
 
   if (!token) {
-    // Jangan throw Error, return null saja agar UI bisa redirect dengan halus
     return null;
   }
 
-  // PERBAIKAN: Endpoint adalah '/user' bukan '/me'
   const response = await fetch(`${API_URL}/user`, {
     method: "GET",
     headers: {
@@ -143,15 +134,10 @@ export async function getCurrentUser() {
     throw new Error(json.message || "Failed to fetch user profile");
   }
 
-  // PERBAIKAN PENTING:
-  // Backend mengembalikan: { success: true, data: { id: 1, name: "..." } }
-  // Frontend butuh langsung objek usernya.
-  // Jadi kita return json.data
-
   if (json.data) {
     Cookies.set("user_profile", JSON.stringify(json.data), { expires: 7 });
     localStorage.setItem("user", JSON.stringify(json.data));
-    return json.data; // <--- Return User Object langsung
+    return json.data;
   }
 
   return json;

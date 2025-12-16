@@ -149,9 +149,7 @@ export default function CoursesTaughtPage() {
                     variant="outline"
                     className="flex items-center gap-1 flex-1"
                     onClick={() =>
-                      router.push(
-                        `/admin/courses_taught/${course.id}/materials`
-                      )
+                      router.push(`/admin/courses/${course.id}/materials`)
                     }
                   >
                     <FileText size={16} /> Materials
@@ -162,7 +160,7 @@ export default function CoursesTaughtPage() {
                     variant="outline"
                     className="flex items-center gap-1 flex-1"
                     onClick={() =>
-                      router.push(`/admin/courses_taught/${course.id}/quizzes`)
+                      router.push(`/admin/courses/${course.id}/quizzes`)
                     }
                   >
                     <BookOpen size={16} /> Quizzes

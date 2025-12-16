@@ -214,7 +214,8 @@ export default function UserDashboard() {
                   <CardContent>
                     {course.progress && (
                       <ProgressBar
-                        percentage={course.progress.percentage}
+                        percentage={course.progress.percentage || 0}
+                        // PERBAIKAN DI SINI: Tambahkan fallback '|| 0'
                         completed={course.progress.completed_items || 0}
                         total={course.progress.total_items || 0}
                         showDetails={true}

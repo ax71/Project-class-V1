@@ -3,26 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { materialService } from "@/services/material.service";
 import { courseService } from "@/services/course.service";
 import { Material, Course } from "@/types/api";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import ErrorMessage from "@/components/common/ErrorMessage";
-import {
-  FileText,
-  Video,
-  Trash2,
-  Plus,
-  ArrowLeft,
-  Upload,
-} from "lucide-react";
+import { FileText, Video, Trash2, Plus, ArrowLeft, Upload } from "lucide-react";
 
 export default function MaterialsManagementPage() {
   const params = useParams();
@@ -83,7 +71,7 @@ export default function MaterialsManagementPage() {
         <div>
           <Button
             variant="ghost"
-            onClick={() => router.push("/admin/courses_taught")}
+            onClick={() => router.push("/admin/courses")}
             className="flex items-center gap-2 mb-2"
           >
             <ArrowLeft size={16} />
@@ -114,19 +102,19 @@ export default function MaterialsManagementPage() {
 
       {/* Upload Form or Materials List */}
       {showUploadForm ? (
-        <MaterialUploadForm onSuccess={() => {
-          setShowUploadForm(false);
-          fetchData();
-        }} />
+        <MaterialUploadForm
+          onSuccess={() => {
+            setShowUploadForm(false);
+            fetchData();
+          }}
+        />
       ) : (
         <>
           {materials.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Upload size={48} className="text-gray-400 mb-3" />
-                <p className="text-gray-500 mb-4">
-                  No materials uploaded yet
-                </p>
+                <p className="text-gray-500 mb-4">No materials uploaded yet</p>
                 <Button
                   onClick={() => setShowUploadForm(true)}
                   className="bg-blue-500 hover:bg-blue-600"
