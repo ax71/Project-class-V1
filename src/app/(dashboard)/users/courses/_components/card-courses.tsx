@@ -49,7 +49,7 @@ export default function CourseCard() {
 
   const getProgressForCourse = (courseId: number) => {
     const courseProgress = progress.find((p) => p.course_id === courseId);
-    return courseProgress?.progress_percentage || 0;
+    return courseProgress?.percentage || 0;
   };
 
   if (loading) {
@@ -80,7 +80,7 @@ export default function CourseCard() {
             <CardTitle className="text-lg font-semibold">
               {course.title}
             </CardTitle>
-            <CardDescription className="text-sm text-gray-500 line-clamp-2">
+            <CardDescription className="text-sm text-gray-500 line-clamp-1">
               {course.description}
             </CardDescription>
           </CardHeader>
@@ -105,7 +105,10 @@ export default function CourseCard() {
               <span>Progress</span>
               <span>{getProgressForCourse(course.id)}%</span>
             </div>
-            <Progress value={getProgressForCourse(course.id)} className="w-full" />
+            <Progress
+              value={getProgressForCourse(course.id)}
+              className="w-full"
+            />
             <Link href={`/users/courses/${course.id}`} className="w-full mt-2">
               <Button className="w-full bg-blue-500 hover:bg-blue-600">
                 View Course
@@ -117,4 +120,3 @@ export default function CourseCard() {
     </div>
   );
 }
-

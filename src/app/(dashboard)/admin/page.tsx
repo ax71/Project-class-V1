@@ -24,14 +24,12 @@ export default function AdminDashboard() {
   const [adminName, setAdminName] = useState("Admin");
 
   useEffect(() => {
-    // Get admin name from cookies
     const userProfile = Cookies.get("user_profile");
     if (userProfile) {
       const user = JSON.parse(userProfile);
       setAdminName(user.name || "Admin");
     }
 
-    // Fetch courses
     const fetchData = async () => {
       try {
         const coursesData = await courseService.getAllCourses();
@@ -42,7 +40,6 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -169,7 +166,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* === Recent Courses === */}
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Recent Courses</CardTitle>

@@ -6,14 +6,42 @@
 
 ---
 
+## ⚡ **CRITICAL: What the Backend Does Automatically**
+
+> [!IMPORTANT]
+> **READ THIS FIRST TO AVOID DUPLICATE IMPLEMENTATION**
+>
+> The backend **AUTOMATICALLY** handles the following logic. **DO NOT reimplement these on the frontend:**
+>
+> 1. ✅ **Progress Calculation** - Backend calculates percentage automatically based on completed items
+> 2. ✅ **Quiz Grading** - Backend calculates scores automatically when quiz is submitted
+> 3. ✅ **File Storage** - Backend handles file upload, storage, and URL generation
+> 4. ✅ **Authorization** - Backend checks permissions (admin/owner) automatically
+> 5. ✅ **Pagination** - Backend paginates course lists automatically
+> 6. ✅ **Duplicate Prevention** - Backend prevents duplicate progress records automatically
+>
+> **Frontend Responsibility:**
+> - Send completion events (material viewed, quiz submitted)
+> - Display the calculated data returned by backend
+> - Handle UI/UX and user interactions
+>
+> **DO NOT:**
+> - Calculate progress percentage on frontend
+> - Calculate quiz scores on frontend
+> - Implement authorization logic on frontend
+> - Store file paths manually
+
+---
+
 ## 📋 Table of Contents
 
 1. [Overview](#overview)
-2. [Breaking Changes](#breaking-changes)
-3. [Authentication](#authentication)
-4. [API Response Structure](#api-response-structure)
-5. [Rate Limiting](#rate-limiting)
-6. [Endpoints](#endpoints)
+2. [Backend Automated Features](#backend-automated-features)
+3. [Breaking Changes](#breaking-changes)
+4. [Authentication](#authentication)
+5. [API Response Structure](#api-response-structure)
+6. [Rate Limiting](#rate-limiting)
+7. [Endpoints](#endpoints)
    - [Authentication](#authentication-endpoints)
    - [Courses](#course-endpoints)
    - [Materials](#material-endpoints)
@@ -22,9 +50,9 @@
    - [Quiz Results](#quiz-result-endpoints)
    - [Progress](#progress-endpoints)
    - [Certificates](#certificate-endpoints)
-7. [File Uploads](#file-uploads)
-8. [Error Handling](#error-handling)
-9. [Code Examples](#code-examples)
+8. [File Uploads](#file-uploads)
+9. [Error Handling](#error-handling)
+10. [Code Examples](#code-examples)
 
 ---
 
@@ -35,8 +63,8 @@ This is a RESTful API for the Learning Management System (LMS) built with Larave
 - User authentication (register, login, logout)
 - Course management with cover images
 - Learning materials (PDF, videos, documents)
-- Quiz system with automatic grading
-- Student progress tracking
+- Quiz system with **automatic grading**
+- Student progress tracking with **automatic percentage calculation**
 - Certificate generation
 
 ### Technology Stack
@@ -45,6 +73,133 @@ This is a RESTful API for the Learning Management System (LMS) built with Larave
 - **Database:** MySQL
 - **Authentication:** Laravel Sanctum (Token-based)
 - **File Storage:** Local Storage (Symlink to `storage/app/public`)
+
+---
+
+## 🤖 Backend Automated Features
+
+### 1. Progress Calculation (AUTOMATIC)
+
+> [!WARNING]
+> **DO NOT calculate progress on frontend!**
+
+**How it works:**
+- Backend tracks each completed material and quiz individually
+- Backend automatically calculates percentage: `(completed_items / total_items) * 100`
+- Backend prevents duplicate completion records
+- Frontend only needs to **send completion events** and **display the result**
+
+**What Frontend Should Do:**
+```javascript
+// ✅ CORRECT: Just send the completion event
+await fetch('/api/update-progress', {
+  method: 'POST',
+  body: JSON.stringify({
+    course_id: 1,
+    material_id: 5,  // or quiz_id: 2
+    is_completed: true
+  })
+});
+
+// Backend returns: { percentage: 45, completed_items: 9, total_items: 20 }
+// Just display this data!
+```
+
+**What Frontend Should NOT Do:**
+```javascript
+// ❌ WRONG: Don't calculate percentage yourself!
+const percentage = (completedCount / totalCount) * 100; // Backend does this!
+```
+
+---
+
+### 2. Quiz Grading (AUTOMATIC)
+
+> [!WARNING]
+> **DO NOT calculate quiz scores on frontend!**
+
+**How it works:**
+- Backend validates all answers against correct answers in database
+- Backend calculates score automatically: `(correct_answers / total_questions) * 100`
+- Backend stores the result
+- Frontend only needs to **submit answers** and **display the score**
+
+**What Frontend Should Do:**
+```javascript
+// ✅ CORRECT: Just submit the answers
+await fetch('/api/submit-quiz', {
+  method: 'POST',
+  body: JSON.stringify({
+    quiz_id: 1,
+    answers: [
+      { question_id: 1, answer_id: 3 },
+      { question_id: 2, answer_id: 7 }
+    ]
+  })
+});
+
+// Backend returns: { score: 85, total_questions: 10 }
+// Just display this score!
+```
+
+**What Frontend Should NOT Do:**
+```javascript
+// ❌ WRONG: Don't check answers or calculate scores yourself!
+const score = answers.filter(a => a.is_correct).length; // Backend does this!
+```
+
+---
+
+### 3. File Upload & URL Generation (AUTOMATIC)
+
+**How it works:**
+- Backend stores files in `storage/app/public/`
+- Backend generates full public URLs automatically
+- Frontend receives ready-to-use URLs
+
+**What Frontend Should Do:**
+```javascript
+// ✅ CORRECT: Just send the file
+const formData = new FormData();
+formData.append('cover_image', file);
+
+const response = await fetch('/api/courses', {
+  method: 'POST',
+  body: formData
+});
+
+// Backend returns: { cover_image_url: "http://localhost:8000/storage/..." }
+// Just use this URL in <img> tag!
+```
+
+---
+
+### 4. Authorization (AUTOMATIC)
+
+**How it works:**
+- Backend checks if user is admin/owner automatically
+- Backend returns 403 error if unauthorized
+- Frontend just needs to handle the error
+
+**What Frontend Should Do:**
+```javascript
+// ✅ CORRECT: Just make the request
+try {
+  await fetch('/api/courses/1', { method: 'DELETE' });
+} catch (error) {
+  if (error.status === 403) {
+    alert('You are not authorized');
+  }
+}
+```
+
+**What Frontend Should NOT Do:**
+```javascript
+// ❌ WRONG: Don't check permissions yourself!
+if (user.role !== 'admin') { // Backend does this!
+  return;
+}
+```
 
 ---
 
@@ -934,22 +1089,111 @@ formData.append('file', fileObject);
 
 ### Progress Endpoints
 
-#### 1. Update Course Progress
+> [!IMPORTANT]
+> **BACKEND CALCULATES PROGRESS AUTOMATICALLY**
+>
+> The backend automatically:
+> - Tracks each completed material/quiz individually
+> - Calculates percentage based on total items in course
+> - Prevents duplicate completion records
+> - Returns real-time progress data
+>
+> **Frontend should ONLY:**
+> - Send completion events when user finishes a material or quiz
+> - Display the percentage returned by backend
+> - **NEVER calculate percentage yourself!**
+
+---
+
+#### 1. Update Course Progress (Mark Item as Complete)
 
 **Endpoint:** `POST /api/update-progress`  
 **Auth Required:** Yes
+
+**Purpose:** Mark a specific material or quiz as completed. Backend will automatically calculate the new progress percentage.
 
 **Request Body:**
 ```json
 {
   "course_id": 1,
-  "status": "in_progress"
+  "material_id": 5,
+  "is_completed": true
+}
+```
+
+**OR** (for quiz completion):
+```json
+{
+  "course_id": 1,
+  "quiz_id": 2,
+  "is_completed": true
 }
 ```
 
 **Fields:**
-- `course_id` (required)
-- `status` (required, one of: "in_progress", "complete")
+- `course_id` (required, integer) - ID of the course
+- `material_id` (optional, integer) - ID of material being completed (use this OR quiz_id)
+- `quiz_id` (optional, integer) - ID of quiz being completed (use this OR material_id)
+- `is_completed` (required, boolean) - Set to `true` when item is completed
+
+> [!NOTE]
+> **Anti-Duplication:** If you send the same completion event multiple times, backend will NOT create duplicate records. It's safe to call this endpoint multiple times for the same item.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Progress updated successfully",
+  "data": {
+    "course_id": 1,
+    "percentage": 45,
+    "completed_items": 9,
+    "total_items": 20
+  }
+}
+```
+
+**Response Fields Explained:**
+- `percentage` - **AUTOMATICALLY CALCULATED** by backend: `(completed_items / total_items) * 100`
+- `completed_items` - Number of unique materials + quizzes user has completed
+- `total_items` - Total number of materials + quizzes in this course
+
+**Frontend Integration Example:**
+```javascript
+// ✅ CORRECT: When user finishes watching a video
+async function markMaterialComplete(courseId, materialId) {
+  const response = await fetch('http://localhost:8000/api/update-progress', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      course_id: courseId,
+      material_id: materialId,
+      is_completed: true
+    })
+  });
+
+  const json = await response.json();
+  
+  // Just display the percentage returned by backend!
+  setProgress(json.data.percentage); // e.g., 45
+  setCompletedCount(json.data.completed_items); // e.g., 9
+  setTotalCount(json.data.total_items); // e.g., 20
+}
+
+// ❌ WRONG: Don't calculate percentage yourself!
+// const percentage = (completed / total) * 100; // Backend does this!
+```
+
+**When to Call This Endpoint:**
+- ✅ When user finishes viewing a material (video, PDF, etc.)
+- ✅ When user completes a quiz (after submitting quiz answers)
+- ✅ When user marks a material as "completed" manually
+- ❌ NOT on page load or navigation
+- ❌ NOT repeatedly for the same item (backend handles duplicates, but avoid unnecessary calls)
 
 ---
 
@@ -957,6 +1201,69 @@ formData.append('file', fileObject);
 
 **Endpoint:** `GET /api/my-progress`  
 **Auth Required:** Yes
+
+**Purpose:** Get list of all completed items across all courses for the current user.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Progress history",
+  "data": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "course_id": 1,
+      "material_id": 5,
+      "quiz_id": null,
+      "is_completed": true,
+      "status": "completed",
+      "course": {
+        "id": 1,
+        "title": "Introduction to Laravel"
+      }
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "course_id": 1,
+      "material_id": null,
+      "quiz_id": 2,
+      "is_completed": true,
+      "status": "completed",
+      "course": {
+        "id": 1,
+        "title": "Introduction to Laravel"
+      }
+    }
+  ]
+}
+```
+
+**Use Case:** Display user's learning history or completed items list.
+
+**Frontend Integration Example:**
+```javascript
+// Get all completed items
+const response = await fetch('http://localhost:8000/api/my-progress', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/json',
+  }
+});
+
+const json = await response.json();
+const completedItems = json.data;
+
+// Group by course if needed
+const byCourse = completedItems.reduce((acc, item) => {
+  if (!acc[item.course_id]) {
+    acc[item.course_id] = [];
+  }
+  acc[item.course_id].push(item);
+  return acc;
+}, {});
+```
 
 ---
 
@@ -1554,6 +1861,139 @@ For questions or issues, contact the backend development team.
 **Last Updated:** December 15, 2025  
 **API Version:** 2.0
 
+---
+
+## 📌 Quick Reference Guide
+
+### Backend Responsibilities (AUTOMATIC)
+
+| Feature | Backend Does | Frontend Should Do | Frontend Should NOT Do |
+|---------|--------------|-------------------|----------------------|
+| **Progress Calculation** | ✅ Calculates percentage automatically | Send completion events, display percentage | ❌ Calculate percentage |
+| **Quiz Grading** | ✅ Validates answers, calculates score | Submit answers, display score | ❌ Check answers or calculate score |
+| **File Upload** | ✅ Stores files, generates URLs | Send files via FormData, display URLs | ❌ Generate file paths |
+| **Authorization** | ✅ Checks admin/owner permissions | Handle 403 errors gracefully | ❌ Check permissions before request |
+| **Pagination** | ✅ Paginates course lists | Display paginated data, handle page changes | ❌ Implement pagination logic |
+| **Duplicate Prevention** | ✅ Prevents duplicate progress records | Call endpoints normally | ❌ Track completion state manually |
+
+---
+
+## ⚠️ Common Mistakes to Avoid
+
+### 1. Calculating Progress on Frontend
+
+```javascript
+// ❌ WRONG - Don't do this!
+const completedMaterials = materials.filter(m => m.completed).length;
+const totalMaterials = materials.length;
+const percentage = (completedMaterials / totalMaterials) * 100;
+
+// ✅ CORRECT - Let backend calculate
+const response = await fetch('/api/update-progress', {
+  method: 'POST',
+  body: JSON.stringify({
+    course_id: 1,
+    material_id: 5,
+    is_completed: true
+  })
+});
+const { percentage } = response.data; // Use this!
+```
+
+---
+
+### 2. Calculating Quiz Scores on Frontend
+
+```javascript
+// ❌ WRONG - Don't do this!
+const correctAnswers = userAnswers.filter(a =>
+  questions.find(q => q.id === a.question_id)
+    .answers.find(ans => ans.id === a.answer_id).is_correct
+).length;
+const score = (correctAnswers / questions.length) * 100;
+
+// ✅ CORRECT - Let backend calculate
+const response = await fetch('/api/submit-quiz', {
+  method: 'POST',
+  body: JSON.stringify({
+    quiz_id: 1,
+    answers: userAnswers
+  })
+});
+const { score } = response.data; // Use this!
+```
+
+---
+
+### 3. Checking Permissions Before Request
+
+```javascript
+// ❌ WRONG - Don't do this!
+if (user.role !== 'admin') {
+  alert('You are not authorized');
+  return;
+}
+await deleteCourse(courseId);
+
+// ✅ CORRECT - Let backend check
+try {
+  await deleteCourse(courseId);
+} catch (error) {
+  if (error.status === 403) {
+    alert('You are not authorized');
+  }
+}
+```
+
+---
+
+### 4. Manually Tracking Completion State
+
+```javascript
+// ❌ WRONG - Don't do this!
+const [completedMaterials, setCompletedMaterials] = useState(new Set());
+
+function markComplete(materialId) {
+  if (!completedMaterials.has(materialId)) {
+    setCompletedMaterials(prev => new Set([...prev, materialId]));
+    // Then call API...
+  }
+}
+
+// ✅ CORRECT - Backend handles duplicates
+function markComplete(materialId) {
+  // Just call the API, backend prevents duplicates
+  await fetch('/api/update-progress', {
+    method: 'POST',
+    body: JSON.stringify({
+      course_id: 1,
+      material_id: materialId,
+      is_completed: true
+    })
+  });
+}
+```
+
+---
+
+## 📞 Support
+
+For questions or issues, contact the backend development team.
+
+**Backend Repository:** https://github.com/ax71/Project-class-V2
+
+---
+
+**Last Updated:** December 15, 2025  
+**API Version:** 2.0
+
+---
+
+## 📚 Additional Notes (Legacy Documentation)
+
+The following section contains legacy documentation in Indonesian for reference:
+
+---
 
 Repository ini berisi source code Backend untuk aplikasi Learning Management System. Dibangun menggunakan **Laravel 12**, menyediakan RESTful API untuk manajemen kursus, kuis, progres siswa, hingga penerbitan sertifikat.
 
@@ -1561,8 +2001,6 @@ Repository ini berisi source code Backend untuk aplikasi Learning Management Sys
 
 -   **Framework:** Laravel 12
 -   **Database:** MySQL
--   **Authentication:** Laravel Sanctum
--   **Storage:** Local Storage (Symlink)
 
 ---
 

@@ -27,6 +27,12 @@ export interface Course {
   updated_at: string;
   materials?: Material[];
   quizzes?: Quiz[];
+  progress?: {
+    percentage: number;
+    is_completed?: boolean;
+    total_items?: number;
+    completed_items?: number;
+  };
 }
 
 export interface Material {
@@ -72,20 +78,37 @@ export interface Progress {
   id: number;
   user_id: number;
   course_id: number;
-  progress_percentage: number;
-  completed: boolean;
+  material_id: number | null;
+  quiz_id: number | null;
+  is_completed: boolean;
+  status: "completed";
   created_at: string;
+  percentage: number;
+  is_completed: boolean;
+  title: string;
+  thumbnail?: string;
   updated_at: string;
   course?: Course;
+}
+
+export interface ProgressUpdateResponse {
+  percentage: number;
+  completed_items: number;
+  total_items: number;
 }
 
 export interface Certificate {
   id: number;
   user_id: number;
   course_id: number;
+  certificate_code: string;
   issued_at: string;
   certificate_url?: string;
   course?: Course;
+  user?: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface QuizSubmission {

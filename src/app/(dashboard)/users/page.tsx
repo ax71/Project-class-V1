@@ -4,78 +4,70 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { BookOpen, Trophy, CheckCircle, Layers } from "lucide-react";
-import { courseService } from "@/services/course.service";
-import { progressService } from "@/services/progress.service";
-import { certificateService } from "@/services/certificate.service";
-import { Course, Progress as ProgressType, Certificate } from "@/types/api";
+import { useDashboard } from "@/hooks/use-dashboard";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import ErrorMessage from "@/components/common/ErrorMessage";
 
 export default function UserDashboard() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [progress, setProgress] = useState<ProgressType[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("Student");
+  const { data, loading, error, refresh } = useDashboard();
+  const [motivation, setMotivation] = useState(0);
+
+  const motivations = [
+    {
+      title: `Keep it up, ${
+        data?.user?.name || "Student"
+      }! Every small step brings you closer to your goals.`,
+    },
+    {
+      title: `You're doing great, ${
+        data?.user?.name || "Student"
+      }! Keep it up!`,
+    },
+    {
+      title: `You're on a roll, ${
+        data?.user?.name || "Student"
+      }! Keep learning!`,
+    },
+    {
+      title: `Amazing progress, ${
+        data?.user?.name || "Student"
+      }! Keep pushing forward!`,
+    },
+    {
+      title: `You're unstoppable, ${
+        data?.user?.name || "Student"
+      }! Keep it up!`,
+    },
+  ];
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [coursesData, progressData, certificatesData] =
-          await Promise.all([
-            courseService.getAllCourses(),
-            progressService.getUserProgress().catch(() => []),
-            certificateService.getUserCertificates().catch(() => []),
-          ]);
-
-        setCourses(coursesData);
-        setProgress(progressData);
-        setCertificates(certificatesData);
-
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          setUserName(user.name || "Student");
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const enrolledCount = progress.length;
-  const completedCount = progress.filter((p) => p.completed).length;
-  const avgProgress =
-    progress.length > 0
-      ? Math.round(
-          progress.reduce((sum, p) => sum + p.progress_percentage, 0) /
-            progress.length
-        )
-      : 0;
-
-  const recentCourses = progress
-    .slice(0, 3)
-    .map((p) => ({
-      ...p,
-      course: courses.find((c) => c.id === p.course_id),
-    }))
-    .filter((p) => p.course);
+    const interval = setInterval(() => {
+      setMotivation((prev) => (prev + 1) % motivations.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [motivations.length]);
 
   if (loading) {
     return <LoadingSpinner size="lg" text="Loading dashboard..." />;
   }
 
+  if (error) {
+    return <ErrorMessage message={error} onRetry={refresh} />;
+  }
+
+  if (!data) {
+    return null;
+  }
+
   return (
     <div className="w-full h-full space-y-10">
+      {/* Welcome Banner */}
       <div className="w-full bg-gradient-to-r from-sky-300 to-sky-400 rounded-lg shadow-md p-8 md:p-12 flex flex-col md:flex-row items-center justify-between">
         <div>
           <h1 className="mt-9 text-4xl md:text-5xl font-bold text-black mb-4">
-            Good Day, {userName}!
+            Good Day, {data.user?.name || "Student"}!
           </h1>
           <p className="mt-15 text-lg md:text-sm text-black font-mono">
             Ready to start your day with Positivus?
@@ -93,6 +85,7 @@ export default function UserDashboard() {
         </div>
       </div>
 
+      {/* Statistics Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="shadow-sm border-t-4 border-blue-400">
           <CardHeader>
@@ -101,7 +94,7 @@ export default function UserDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{enrolledCount}</p>
+            <p className="text-3xl font-bold">{data.statistics.enrolled}</p>
             <p className="text-sm text-gray-500">Ongoing learning paths</p>
           </CardContent>
         </Card>
@@ -113,7 +106,7 @@ export default function UserDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{completedCount}</p>
+            <p className="text-3xl font-bold">{data.statistics.completed}</p>
             <p className="text-sm text-gray-500">Courses finished</p>
           </CardContent>
         </Card>
@@ -125,8 +118,16 @@ export default function UserDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{avgProgress}%</p>
-            <Progress value={avgProgress} className="mt-2" />
+            <p className="text-3xl font-bold">{data.statistics.avgProgress}%</p>
+            <div className="mt-2">
+              <ProgressBar
+                percentage={data.statistics.avgProgress}
+                completed={data.statistics.completed}
+                total={data.statistics.enrolled}
+                showDetails={false}
+                size="sm"
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -137,45 +138,42 @@ export default function UserDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{certificates.length}</p>
+            <p className="text-3xl font-bold">{data.statistics.certificates}</p>
             <p className="text-sm text-gray-500">Achievements unlocked</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* === RECENT COURSES === */}
-      {recentCourses.length > 0 && (
+      {/* Newly Added Courses */}
+      {data.latestCourses.length > 0 && (
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4 dark:text-white">
-            Recently Viewed Courses
+            Newly Added Courses
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recentCourses.map((item) => (
-              <Link
-                key={item.id}
-                href={`/users/courses/${item.course_id}`}
-              >
-                <Card className="overflow-hidden shadow-sm hover:shadow-lg transition">
+            {data.latestCourses.map((course) => (
+              <Link key={course.id} href={`/users/courses/${course.id}`}>
+                <Card className="overflow-hidden shadow-sm hover:shadow-lg transition h-full">
                   <div className="relative h-40">
                     <Image
-                      src={item.course?.thumbnail || "/course-1.jpg"}
-                      alt={item.course?.title || "Course"}
+                      src={course.thumbnail || "/course-1.jpg"}
+                      alt={course.title}
                       fill
                       className="object-cover"
                     />
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      New
+                    </div>
                   </div>
                   <CardHeader>
-                    <CardTitle className="text-lg">
-                      {item.course?.title}
+                    <CardTitle className="text-lg line-clamp-2">
+                      {course.title}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">
-                        Progress: {item.progress_percentage}%
-                      </span>
-                    </div>
-                    <Progress value={item.progress_percentage} className="mt-2" />
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {course.description}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -184,12 +182,60 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* === MOTIVATIONAL BANNER === */}
+      {/* My Enrolled Courses */}
+      {data.enrolledCourses.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 dark:text-white">
+            My Enrolled Courses
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {data.enrolledCourses.map((course) => (
+              <Link key={course.id} href={`/users/courses/${course.id}`}>
+                <Card className="overflow-hidden shadow-sm hover:shadow-lg transition h-full">
+                  <div className="relative h-40">
+                    <Image
+                      src={course.thumbnail || "/course-1.jpg"}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                    />
+                    {course.progress?.percentage === 100 && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <CheckCircle size={14} />
+                        Complete
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-lg line-clamp-2">
+                      {course.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {course.progress && (
+                      <ProgressBar
+                        percentage={course.progress.percentage}
+                        completed={course.progress.completed_items || 0}
+                        total={course.progress.total_items || 0}
+                        showDetails={true}
+                        size="sm"
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Motivational Banner */}
       <div className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-xl shadow-md p-6 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-lg md:text-xl font-medium text-center md:text-left">
-          ✨ Keep it up, {userName}! Every small step brings you closer to
-          mastery.
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {motivations[motivation].title}
+          </h1>
+        </div>
         <Image
           src="/Illustration-1.svg"
           alt="Motivation Illustration"

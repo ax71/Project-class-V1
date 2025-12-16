@@ -23,7 +23,7 @@ export const SIDEBAR_MENU_LIST = {
       icon: Album,
     },
   ],
-  
+
   admin: [
     {
       title: "Dashboard",
@@ -31,8 +31,8 @@ export const SIDEBAR_MENU_LIST = {
       icon: Users,
     },
     {
-      title: "Courses Taught",
-      url: "/admin/courses_taught",
+      title: "Courses",
+      url: "/admin/courses",
       icon: Book,
     },
     {
@@ -42,7 +42,5 @@ export const SIDEBAR_MENU_LIST = {
     },
   ],
 };
-
-
 
 export type SidebarMenuKey = keyof typeof SIDEBAR_MENU_LIST;

@@ -110,17 +110,17 @@ export default function CourseDetailPage() {
             </div>
             <div className="flex-1">
               <CardTitle className="text-3xl mb-2">{course.title}</CardTitle>
-              <CardDescription className="text-base">
+              <CardDescription className="text-base line-clamp-2">
                 {course.description}
               </CardDescription>
               <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-2">Your Progress</p>
                 <Progress
-                  value={progress?.progress_percentage || 0}
+                  value={progress?.percentage || 0}
                   className="w-full"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  {progress?.progress_percentage || 0}% Complete
+                  {progress?.percentage || 0}% Complete
                 </p>
               </div>
             </div>

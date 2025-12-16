@@ -97,7 +97,9 @@ export default function StudentProgressPage() {
               >
                 <CardHeader>
                   <CardTitle>{course.title}</CardTitle>
-                  <CardDescription>{course.category}</CardDescription>
+                  <CardDescription className="line-clamp-2">
+                    {course.category}
+                  </CardDescription>
                 </CardHeader>
 
                 <CardContent>

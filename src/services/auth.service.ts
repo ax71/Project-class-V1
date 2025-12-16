@@ -1,5 +1,7 @@
 import Cookies from "js-cookie";
 
+// Kita definisikan Base URL agar tidak berulang
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 export async function registerUser(payload: {
   name: string;
@@ -8,9 +10,7 @@ export async function registerUser(payload: {
   password_confirmation: string;
   role: "admin" | "user";
 }) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  const res = await fetch(`${baseUrl}/register`, {
+  const res = await fetch(`${API_URL}/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,30 +19,32 @@ export async function registerUser(payload: {
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json();
+  const json = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.message || "Failed to register");
+    throw new Error(json.message || "Failed to register");
   }
 
-  if (data.access_token) {
-    Cookies.set("token", data.access_token, { expires: 7 }); // 7 days expiry
-  }
-  if (data.data) {
-    Cookies.set("user_profile", JSON.stringify(data.data), { expires: 7 });
+  // PERBAIKAN: Sesuai Docs v2.0, token ada di json.data.access_token
+  const responseData = json.data;
+
+  if (responseData?.access_token) {
+    Cookies.set("token", responseData.access_token, { expires: 7 });
   }
 
-  return data;
+  // PERBAIKAN: User ada di json.data.user
+  if (responseData?.user) {
+    Cookies.set("user_profile", JSON.stringify(responseData.user), {
+      expires: 7,
+    });
+    localStorage.setItem("user", JSON.stringify(responseData.user)); // Backup ke localStorage agar konsisten
+  }
+
+  return responseData;
 }
 
-
-export async function loginUser(payload: {
-  email: string;
-  password: string;
-}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  const response = await fetch(`${baseUrl}/login`, {
+export async function loginUser(payload: { email: string; password: string }) {
+  const response = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -51,61 +53,77 @@ export async function loginUser(payload: {
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json();
+  const json = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Login failed");
+    throw new Error(json.message || "Login failed");
   }
 
-  // Store token and user data in Cookies for consistency with api-client.ts
-  if (data.access_token) {
-    Cookies.set("token", data.access_token, { expires: 7 }); // 7 days expiry
-  }
-  if (data.data) {
-    Cookies.set("user_profile", JSON.stringify(data.data), { expires: 7 });
+  // PERBAIKAN: Unwrapping data sesuai Docs v2.0
+  const responseData = json.data;
+
+  if (responseData?.access_token) {
+    Cookies.set("token", responseData.access_token, { expires: 7 });
   }
 
-  return data;
+  if (responseData?.user) {
+    Cookies.set("user_profile", JSON.stringify(responseData.user), {
+      expires: 7,
+    });
+    localStorage.setItem("user", JSON.stringify(responseData.user));
+  }
+
+  return responseData;
 }
 
 export async function logoutUser() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const token = Cookies.get("token");
 
+  // Kita tetap hapus data di browser meskipun token tidak ada / request gagal
+  // agar user tidak terjebak di state login palsu.
+  const clearLocalData = () => {
+    Cookies.remove("token");
+    Cookies.remove("user_profile");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
+
   if (!token) {
-    throw new Error("No authentication token found");
+    clearLocalData();
+    return;
   }
 
-  const response = await fetch(`${baseUrl}/logout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_URL}/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Logout failed");
+    if (!response.ok) {
+      console.error("Logout failed on server, cleaning up locally anyway.");
+    }
+  } catch (error) {
+    console.error("Logout connection error", error);
+  } finally {
+    // Selalu hapus data lokal apa pun hasil dari server
+    clearLocalData();
   }
-
-  Cookies.remove("token");
-  Cookies.remove("user_profile");
-
-  return data;
 }
 
 export async function getCurrentUser() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const token = Cookies.get("token");
 
   if (!token) {
-    throw new Error("No authentication token found");
+    // Jangan throw Error, return null saja agar UI bisa redirect dengan halus
+    return null;
   }
 
-  const response = await fetch(`${baseUrl}/user`, {
+  // PERBAIKAN: Endpoint adalah '/user' bukan '/me'
+  const response = await fetch(`${API_URL}/user`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -114,15 +132,27 @@ export async function getCurrentUser() {
     },
   });
 
-  const data = await response.json();
+  const json = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Failed to fetch user profile");
+    // Jika token expired (401), bersihkan data
+    if (response.status === 401) {
+      Cookies.remove("token");
+      localStorage.removeItem("user");
+    }
+    throw new Error(json.message || "Failed to fetch user profile");
   }
 
-  if (data.data) {
-    Cookies.set("user_profile", JSON.stringify(data.data), { expires: 7 });
+  // PERBAIKAN PENTING:
+  // Backend mengembalikan: { success: true, data: { id: 1, name: "..." } }
+  // Frontend butuh langsung objek usernya.
+  // Jadi kita return json.data
+
+  if (json.data) {
+    Cookies.set("user_profile", JSON.stringify(json.data), { expires: 7 });
+    localStorage.setItem("user", JSON.stringify(json.data));
+    return json.data; // <--- Return User Object langsung
   }
 
-  return data;
+  return json;
 }

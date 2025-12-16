@@ -58,7 +58,9 @@ export default function CoursesTaughtPage() {
         alert("✅ Course deleted successfully");
       } catch (err: any) {
         alert(
-          `Failed to delete course: ${err.response?.data?.message || err.message}`
+          `Failed to delete course: ${
+            err.response?.data?.message || err.message
+          }`
         );
       }
     }
@@ -147,7 +149,9 @@ export default function CoursesTaughtPage() {
                     variant="outline"
                     className="flex items-center gap-1 flex-1"
                     onClick={() =>
-                      router.push(`/admin/courses_taught/${course.id}/materials`)
+                      router.push(
+                        `/admin/courses_taught/${course.id}/materials`
+                      )
                     }
                   >
                     <FileText size={16} /> Materials
