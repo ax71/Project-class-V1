@@ -14,14 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { courseService } from "@/services/course.service";
+import { Loader2 } from "lucide-react"; // Ikon loading (opsional)
 
 export default function AddCoursePage() {
   const router = useRouter();
 
+  // 1. State untuk Text Input
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    // cover_image kita hapus dari sini karena ditangani oleh state imageFile terpisah
   });
+
+  // 2. State khusus untuk File Gambar
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,70 +39,102 @@ export default function AddCoursePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      await courseService.createCourse(formData);
+      // 3. Bungkus data ke dalam FormData (Wajib untuk upload file)
+      const payload = new FormData();
+      payload.append("title", formData.title);
+      payload.append("description", formData.description);
+
+      if (imageFile) {
+        // Pastikan key 'thumbnail' atau 'cover_image' sesuai dengan yang diminta Backend Laravel
+        payload.append("cover_image", imageFile);
+      }
+
+      // Kirim ke service (Service sekarang sudah menerima FormData)
+      await courseService.createCourse(payload);
+
       alert(`✅ Course "${formData.title}" created successfully!`);
       router.push("/admin/courses");
+      router.refresh(); // Refresh agar list course terupdate
     } catch (err: any) {
+      console.error(err);
       setError(err.response?.data?.message || "Failed to create course");
-      alert(`❌ Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex items-center justify-center min-h-[80vh] bg-gray-50/50 p-6">
+      <Card className="w-full max-w-lg shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">
-            Add New Course
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Add New Course</CardTitle>
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Title */}
-            <div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title Input */}
+            <div className="space-y-2">
               <Label htmlFor="title">Course Title</Label>
               <Input
                 id="title"
                 name="title"
+                placeholder="Ex: Introduction to React"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Enter course title"
                 required
-                disabled={loading}
               />
             </div>
 
-            {/* Description */}
-            <div>
+            {/* Description Input */}
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 name="description"
+                placeholder="Describe what students will learn..."
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Enter course description"
-                required
-                disabled={loading}
                 rows={4}
+                required
               />
             </div>
 
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="thumbnail">Course Thumbnail</Label>
+              <Input
+                id="thumbnail"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-gray-500">
+                Recommended size: 1280x720 (JPG, PNG)
+              </p>
+            </div>
+
+            {/* Error Message */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
 
-            <CardFooter className="flex justify-end gap-2 p-0 pt-4">
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -104,17 +143,20 @@ export default function AddCoursePage() {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={loading}
-              >
-                {loading ? "Creating..." : "Save Course"}
+              <Button type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                    Creating...
+                  </>
+                ) : (
+                  "Create Course"
+                )}
               </Button>
-            </CardFooter>
+            </div>
           </form>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

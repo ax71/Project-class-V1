@@ -22,7 +22,7 @@ export interface Course {
   id: number;
   title: string;
   description: string;
-  thumbnail?: string;
+  cover_image?: string | null;
   created_at: string;
   updated_at: string;
   materials?: Material[];

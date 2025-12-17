@@ -12,12 +12,14 @@ export const courseService = {
     return response.data.data || response.data;
   },
 
-  async createCourse(data: {
-    title: string;
-    description: string;
-  }): Promise<Course> {
-    const response = await apiClient.post<{ data: Course }>("/courses", data);
-    return response.data.data || response.data;
+  async createCourse(data: FormData) {
+    const response = await apiClient.post("/courses", data, {
+      headers: {
+        // Penting: Beritahu browser bahwa ini adalah upload file
+        "Content-Type": "multipart/form-data", 
+      },
+    });
+    return response.data;
   },
 
   async updateCourse(
@@ -49,4 +51,20 @@ export const courseService = {
     );
     return response.data.data || response.data;
   },
+
+  getCourseImageUrl(path: string | null | undefined) {
+    if (!path) return "/course-1.jpg"; // Placeholder default dari public folder Next.js
+    
+    // Jika path sudah lengkap (https://...), kembalikan langsung
+    if (path.startsWith("http")) return path;
+
+    // Jika path relatif, gabungkan dengan BASE URL Backend
+    // Pastikan NEXT_PUBLIC_API_URL mengarah ke root backend (bukan /api)
+    // Contoh: http://localhost:8000
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+    
+    // Laravel storage link biasanya ada di /storage/
+    return `${baseUrl}/storage/${path}`;
+  }
+
 };
