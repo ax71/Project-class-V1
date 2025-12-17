@@ -1,6 +1,7 @@
 "use client";
 
-import { EllipsisVertical, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { EllipsisVertical, LogOut, User as UserIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +34,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { EditProfileDialog } from "@/app/(dashboard)/users/_components/edit-profile";
 
 interface User {
   name: string;
@@ -49,140 +51,203 @@ export function AppSidebar({
   const pathname = usePathname();
   const router = useRouter();
 
-  // === Ambil data user ===
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const auth = useAuth();
-  const contextUser = auth?.user;
 
-  // fallback jika tidak pakai AuthContext
-  const localUser =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null;
+  // 1. STATE AWAL: WAJIB pakai data Server (props 'user')
+  // JANGAN baca localStorage di sini!
+  const [userData, setUserData] = useState({
+    name: user?.name || "Guest",
+    email: user?.email || "",
+    role: (user?.role || "user") as SidebarMenuKey,
+    avatarUrl: user?.avatar_url || "",
+  });
 
-  const name = user?.name ?? "Guest";
-  const role = (user?.role ?? "user") as SidebarMenuKey;
-  const avatarUrl = user?.avatar_url ?? "";
+  // 2. USE EFFECT: Baru baca localStorage setelah halaman tampil (Client Only)
+  useEffect(() => {
+    // Ambil data terbaru dari browser storage atau context
+    const localUser =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("user") || "null")
+        : null;
+
+    const contextUser = auth?.user;
+
+    // Jika ada data lokal yang lebih baru, update state
+    if (localUser || contextUser) {
+      setUserData({
+        name: contextUser?.name || localUser?.name || user?.name || "Guest",
+        email: contextUser?.email || localUser?.email || user?.email || "",
+        role: (contextUser?.role ||
+          localUser?.role ||
+          user?.role ||
+          "user") as SidebarMenuKey,
+        avatarUrl:
+          contextUser?.avatar_url ||
+          localUser?.avatar_url ||
+          user?.avatar_url ||
+          "",
+      });
+    }
+  }, [auth?.user, user]); // Dependency array penting
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // kalau pakai AuthContext
     auth?.logout?.();
-
     router.push("/login");
   };
 
   return (
-    <Sidebar>
-      {/* HEADER */}
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div className="font-bold">
-                <div className="p-2 flex items-center justify-center rounded-md">
-                  <Image
-                    src="/Icon.svg"
-                    alt="Positivus"
-                    width={42}
-                    height={42}
-                  />
-                </div>
-                Positivus
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+    <>
+      <EditProfileDialog
+        open={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+        currentUser={{ name: userData.name, email: userData.email }}
+      />
 
-      {/* MENU LIST */}
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent className="flex flex-col-4 gap-2">
-            <SidebarMenu>
-              {SIDEBAR_MENU_LIST[role]?.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a
-                      href={item.url}
-                      className={cn("px-4 py-3 h-auto", {
-                        "bg-sky-500 text-white hover:bg-sky-500 hover:text-white":
-                          pathname === item.url,
-                      })}
-                    >
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      {/* FOOTER / USER */}
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={avatarUrl} alt={name} />
-                    <AvatarFallback className="rounded-lg">
-                      {name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="leading-tight">
-                    <h4 className="truncate font-medium">{name}</h4>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {role}
-                    </p>
+      <Sidebar>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <div className="font-bold">
+                  <div className="p-2 flex items-center justify-center rounded-md">
+                    <Image
+                      src="/Icon.svg"
+                      alt="Positivus"
+                      width={42}
+                      height={42}
+                    />
                   </div>
+                  Positivus
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
 
-                  <EllipsisVertical className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent className="flex flex-col gap-2">
+              <SidebarMenu>
+                {/* Render menu berdasarkan Role */}
+                {/* Jika role berubah di client, React akan re-render list ini dengan aman */}
+                {SIDEBAR_MENU_LIST[userData.role]?.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <a
+                        href={item.url}
+                        className={cn("px-4 py-3 h-auto", {
+                          "bg-sky-500 text-white hover:bg-sky-500 hover:text-white":
+                            pathname === item.url,
+                        })}
+                      >
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-              <DropdownMenuContent
-                className="min-w-56 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center px-1">
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton size="lg">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={avatarUrl} alt={name} />
-                      <AvatarFallback className="rounded-lg">
-                        {name.charAt(0).toUpperCase()}
+                      {/* Gunakan key agar React merender ulang Avatar jika URL berubah */}
+                      <AvatarImage
+                        key={userData.avatarUrl}
+                        src={userData.avatarUrl}
+                        alt={userData.name}
+                      />
+                      {/* suppressHydrationWarning mencegah error jika text beda server/client */}
+                      <AvatarFallback
+                        className="rounded-lg"
+                        suppressHydrationWarning
+                      >
+                        {userData.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+
                     <div className="leading-tight">
-                      <h4 className="truncate font-medium">{name}</h4>
+                      <h4
+                        className="truncate font-medium"
+                        suppressHydrationWarning
+                      >
+                        {userData.name}
+                      </h4>
                       <p className="truncate text-xs text-muted-foreground">
-                        {role}
+                        {userData.role}
                       </p>
                     </div>
-                  </div>
-                </DropdownMenuLabel>
 
-                <DropdownMenuSeparator />
+                    <EllipsisVertical className="ml-auto size-4" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
 
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+                <DropdownMenuContent
+                  className="min-w-56 rounded-lg"
+                  side={isMobile ? "bottom" : "right"}
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center px-1">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage
+                          src={userData.avatarUrl}
+                          alt={userData.name}
+                        />
+                        <AvatarFallback
+                          className="rounded-lg"
+                          suppressHydrationWarning
+                        >
+                          {userData.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="leading-tight">
+                        <h4
+                          className="truncate font-medium"
+                          suppressHydrationWarning
+                        >
+                          {userData.name}
+                        </h4>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {userData.role}
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+    </>
   );
 }

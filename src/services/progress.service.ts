@@ -1,37 +1,50 @@
 import apiClient from "@/lib/api-client";
-import { Progress, ProgressUpdateResponse } from "@/types/api";
+
+// Kita definisikan tipe responsenya di sini agar TypeScript paham struktur datanya
+export interface ProgressUpdateResponse {
+  message: string;
+  data: {
+    percentage: number;
+    completed_items: number;
+    total_items: number;
+  };
+}
 
 export const progressService = {
-  // Ambil data progress summary untuk dashboard (versi v2.1)
-  async getProgressSummary(): Promise<any[]> {
-    const response = await apiClient.get<{ data: any[] }>("/progress-summary");
+  // 1. Ambil data progress summary (Untuk Dashboard & Persentase Bar)
+  async getProgressSummary() {
+    const response = await apiClient.get("/progress-summary");
     return response.data.data || response.data;
   },
 
-  // Ambil data granular progress (list item IDs yang sudah complete)
-  async getUserProgress(): Promise<Progress[]> {
-    const response = await apiClient.get<{ data: Progress[] }>("/my-progress");
+  // 2. Ambil data checklist item (Untuk tombol hijau)
+  async getUserProgress() {
+    const response = await apiClient.get("/my-progress");
     return response.data.data || response.data;
   },
 
-  // UPDATE PROGRESS (VERSI BARU - SINKRON DENGAN BACKEND)
+  // 3. UPDATE PROGRESS (Perbaikan Parameter)
+  // Kita ubah urutan parameternya agar cocok dengan Hook yang baru
   async updateProgress(
     courseId: number,
-    itemId: number,
-    type: "material" | "quiz",
-    isCompleted: boolean = true
-  ): Promise<ProgressUpdateResponse> {
+    materialId: number | null, // Bisa null jika ini quiz
+    isCompleted: boolean,
+    quizId: number | null = null // Optional, default null
+  ) {
     const payload = {
       course_id: courseId,
+      material_id: materialId,
+      quiz_id: quizId,
       is_completed: isCompleted,
-      material_id: type === "material" ? itemId : null,
-      quiz_id: type === "quiz" ? itemId : null,
     };
 
-    // Kirim ke backend
-    const response = await apiClient.post("/update-progress", payload);
+    // Kita return response.data UTUH (termasuk wrapper message & data)
+    // agar Hook bisa mengakses result.data.percentage
+    const response = await apiClient.post<ProgressUpdateResponse>(
+      "/update-progress",
+      payload
+    );
 
-    // Backend akan membalas dengan persentase terbaru hasil hitungan otomatis
-    return response.data.data || response.data;
+    return response.data;
   },
 };
