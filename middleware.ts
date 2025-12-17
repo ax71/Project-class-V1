@@ -57,11 +57,9 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     } catch (e) {
-      // Error parsing, aman-nya stay atau logout
     }
   }
 
-  // Lolos semua pengecekan
   return NextResponse.next();
 }
 

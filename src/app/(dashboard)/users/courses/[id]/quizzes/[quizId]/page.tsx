@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Pastikan path ini benar
 import {
   Card,
   CardHeader,
@@ -18,13 +18,20 @@ import { certificateService } from "@/services/certificate.service";
 import { Quiz, Question, Answer } from "@/types/api";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import ErrorMessage from "@/components/common/ErrorMessage";
-import { ArrowLeft, CheckCircle, XCircle, Trophy, Award } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Trophy,
+  Award,
+  Loader2,
+} from "lucide-react";
 
 export default function QuizTakingPage() {
   const params = useParams();
   const router = useRouter();
   const courseId = Number(params.id);
-  const quizId = Number(params.quizId);
+  const quizId = Number(params.quizId); // Pastikan nama param di folder [quizId] sesuai
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -32,6 +39,7 @@ export default function QuizTakingPage() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // State loading saat submit
   const [courseComplete, setCourseComplete] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
@@ -42,6 +50,7 @@ export default function QuizTakingPage() {
       const quizData = await quizService.getQuizById(quizId);
       setQuiz(quizData);
     } catch (err: any) {
+      console.error(err);
       setError(err.response?.data?.message || "Failed to load quiz");
     } finally {
       setLoading(false);
@@ -49,7 +58,9 @@ export default function QuizTakingPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (quizId) {
+      fetchData();
+    }
   }, [quizId]);
 
   const handleAnswerChange = (questionId: number, answerId: number) => {
@@ -58,60 +69,59 @@ export default function QuizTakingPage() {
 
   const handleSubmit = async () => {
     if (!quiz?.questions) return;
+    setIsSubmitting(true); // Aktifkan loading tombol
 
-    let correctCount = 0;
-    quiz.questions.forEach((question) => {
-      const selectedAnswerId = answers[question.id];
-      const correctAnswer = question.answers?.find((a) => a.is_correct);
-      if (selectedAnswerId === correctAnswer?.id) {
-        correctCount++;
-      }
-    });
-
-    setScore(correctCount);
-    setSubmitted(true);
-
-    // Update progress after quiz submission
     try {
+      // 1. Hitung Score Lokal
+      let correctCount = 0;
+      quiz.questions.forEach((question) => {
+        const selectedAnswerId = answers[question.id];
+        const correctAnswer = question.answers?.find((a) => a.is_correct);
+        if (selectedAnswerId === correctAnswer?.id) {
+          correctCount++;
+        }
+      });
+
+      setScore(correctCount);
+      setSubmitted(true);
+
+      // 2. Kirim Progress ke Backend
+      // Kita kirim 'quiz_id' dan is_completed: true (asumsi lulus berapapun nilainya, atau sesuaikan logika backend)
       const result = await progressService.updateProgress(
         courseId,
-        quizId,
-        "quiz",
-        true
+        null, // Material ID null
+        true, // Completed
+        quizId // Quiz ID terisi
       );
 
-      console.log(`✅ Quiz completed! Progress: ${result.percentage}%`);
+      console.log(`✅ Quiz completed! Progress: ${result.data.percentage}%`);
 
-      // Check if course is complete and generate certificate
-      if (result.percentage === 100) {
+      // 3. Cek Sertifikat (Jika 100%)
+      if (result.data.percentage === 100) {
         setCourseComplete(true);
-
         try {
           await certificateService.generateCertificate(courseId);
           setShowCertificateModal(true);
-          console.log("🎉 Certificate generated!");
         } catch (error: any) {
           if (error.response?.status === 409) {
             console.log("Certificate already exists");
             setShowCertificateModal(true);
-          } else {
-            console.error("Failed to generate certificate:", error);
           }
         }
       }
     } catch (error) {
       console.error("Failed to update progress:", error);
+      alert("Failed to submit quiz result. Please try again.");
+    } finally {
+      setIsSubmitting(false); // Matikan loading tombol
     }
-  };
-
-  const getCorrectAnswer = (question: Question): Answer | undefined => {
-    return question.answers?.find((a) => a.is_correct);
   };
 
   const isAnswerCorrect = (questionId: number): boolean => {
     const question = quiz?.questions?.find((q) => q.id === questionId);
+    if (!question) return false;
     const selectedAnswerId = answers[questionId];
-    const correctAnswer = getCorrectAnswer(question!);
+    const correctAnswer = question.answers?.find((a) => a.is_correct);
     return selectedAnswerId === correctAnswer?.id;
   };
 
@@ -125,39 +135,48 @@ export default function QuizTakingPage() {
     );
   }
 
-  const totalQuestions = quiz.questions?.length || 0;
+  // Validasi Tambahan: Pastikan pertanyaan ada
+  if (!quiz.questions || quiz.questions.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500 mb-4">
+          No questions available for this quiz.
+        </p>
+        <Button variant="outline" onClick={() => router.back()}>
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  const totalQuestions = quiz.questions.length;
   const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
-  const allAnswered =
-    Object.keys(answers).length === totalQuestions && totalQuestions > 0;
+
+  // Logic Tombol Aktif: Semua pertanyaan harus dijawab
+  const allAnswered = Object.keys(answers).length === totalQuestions;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 pb-10">
       {/* Certificate Celebration Modal */}
       {showCertificateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-md w-full p-6 text-center animate-in zoom-in">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <Card className="max-w-md w-full p-6 text-center shadow-2xl">
             <div className="mb-4">
-              <Trophy className="mx-auto text-yellow-500" size={80} />
+              <Trophy
+                className="mx-auto text-yellow-500 animate-bounce"
+                size={80}
+              />
             </div>
             <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
               🎉 Congratulations!
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-4">
-              You've completed this course!
+              You've completed the entire course!
             </p>
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 p-4 rounded-lg mb-6">
-              <Award
-                className="mx-auto text-yellow-600 dark:text-yellow-400 mb-2"
-                size={48}
-              />
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                Your certificate is ready!
-              </p>
-            </div>
             <div className="flex flex-col gap-3">
               <Button
                 onClick={() => router.push("/users/certificates")}
-                className="w-full bg-yellow-500 hover:bg-yellow-600"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold"
               >
                 <Award className="mr-2" size={18} />
                 View Certificate
@@ -167,7 +186,7 @@ export default function QuizTakingPage() {
                 onClick={() => setShowCertificateModal(false)}
                 className="w-full"
               >
-                Continue Learning
+                Close
               </Button>
             </div>
           </Card>
@@ -178,108 +197,143 @@ export default function QuizTakingPage() {
       <Button
         variant="ghost"
         onClick={() => router.push(`/users/courses/${courseId}`)}
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 mb-4"
       >
         <ArrowLeft size={16} />
         Back to Course
       </Button>
 
       {/* Quiz Header */}
-      <Card>
+      <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
           <CardTitle className="text-2xl">{quiz.title}</CardTitle>
-          <CardDescription>{quiz.description}</CardDescription>
+          <CardDescription className="text-base mt-2">
+            {quiz.description}
+          </CardDescription>
+
           {submitted && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
-              <h3 className="text-lg font-semibold">
-                Your Score: {score} / {totalQuestions} ({percentage.toFixed(0)}
-                %)
+            <div
+              className={`mt-6 p-6 rounded-lg border ${
+                percentage >= 70
+                  ? "bg-green-50 border-green-200"
+                  : "bg-orange-50 border-orange-200"
+              }`}
+            >
+              <h3 className="text-xl font-bold mb-1">
+                Your Score:{" "}
+                <span
+                  className={
+                    percentage >= 70 ? "text-green-600" : "text-orange-600"
+                  }
+                >
+                  {score} / {totalQuestions}
+                </span>
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {percentage >= 70
-                  ? "🎉 Congratulations! You passed!"
-                  : "Keep learning and try again!"}
+              <p className="text-gray-600 mb-2">
+                Result: {percentage.toFixed(0)}%
               </p>
-              {courseComplete && (
-                <div className="mt-3 p-3 bg-green-50 dark:bg-green-900 border border-green-500 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="text-yellow-500" size={24} />
-                    <div>
-                      <p className="font-semibold text-green-800 dark:text-green-200">
-                        Course Completed!
-                      </p>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        You've finished all materials and quizzes. You can now
-                        claim your certificate!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+
+              <div className="flex items-center gap-2 font-medium">
+                {percentage >= 70 ? (
+                  <>
+                    <CheckCircle className="text-green-600" />
+                    <span className="text-green-700">Passed! Great job.</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="text-orange-600" />
+                    <span className="text-orange-700">
+                      Don't give up! Try again to improve.
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </CardHeader>
       </Card>
 
-      {/* Questions */}
+      {/* Questions List */}
       <div className="space-y-6">
-        {quiz.questions?.map((question, index) => (
-          <Card key={question.id}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-start gap-2">
-                <span className="text-blue-500">Q{index + 1}.</span>
-                <span>{question.question_text}</span>
+        {quiz.questions.map((question, index) => (
+          <Card key={question.id} className="overflow-hidden">
+            <CardHeader className="bg-gray-50/50 dark:bg-gray-800/50 pb-4">
+              <CardTitle className="text-lg flex items-start gap-3">
+                <span className="flex items-center justify-center bg-blue-100 text-blue-700 rounded-full w-8 h-8 text-sm flex-shrink-0">
+                  {index + 1}
+                </span>
+                <span className="mt-1">{question.question_text}</span>
+
                 {submitted && (
-                  <span className="ml-auto">
+                  <span className="ml-auto flex-shrink-0">
                     {isAnswerCorrect(question.id) ? (
-                      <CheckCircle className="text-green-500" size={24} />
+                      <div className="flex items-center gap-1 text-green-600 text-sm font-medium bg-green-50 px-2 py-1 rounded">
+                        <CheckCircle size={16} /> Correct
+                      </div>
                     ) : (
-                      <XCircle className="text-red-500" size={24} />
+                      <div className="flex items-center gap-1 text-red-600 text-sm font-medium bg-red-50 px-2 py-1 rounded">
+                        <XCircle size={16} /> Wrong
+                      </div>
                     )}
                   </span>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <RadioGroup
                 value={answers[question.id]?.toString()}
                 onValueChange={(value) =>
-                  handleAnswerChange(question.id, Number(value))
+                  !submitted && handleAnswerChange(question.id, Number(value))
                 }
-                disabled={submitted}
+                disabled={submitted} // Disable input setelah submit
+                className="space-y-3"
               >
                 {question.answers?.map((answer) => {
                   const isSelected = answers[question.id] === answer.id;
                   const isCorrect = answer.is_correct;
-                  const showCorrect = submitted && isCorrect;
-                  const showWrong = submitted && isSelected && !isCorrect;
+
+                  // Styling Logika untuk Hasil
+                  let borderClass = "border-gray-200 hover:border-blue-300";
+                  let bgClass = "hover:bg-gray-50";
+
+                  if (submitted) {
+                    if (isCorrect) {
+                      borderClass = "border-green-500 ring-1 ring-green-500";
+                      bgClass = "bg-green-50/50";
+                    } else if (isSelected && !isCorrect) {
+                      borderClass = "border-red-500";
+                      bgClass = "bg-red-50/50";
+                    } else {
+                      bgClass = "opacity-50"; // Jawaban lain jadi agak transparan
+                    }
+                  } else if (isSelected) {
+                    borderClass = "border-blue-500 ring-1 ring-blue-500";
+                    bgClass = "bg-blue-50/30";
+                  }
 
                   return (
                     <div
                       key={answer.id}
-                      className={`flex items-center space-x-2 p-3 rounded-lg border ${
-                        showCorrect
-                          ? "bg-green-50 border-green-500 dark:bg-green-900"
-                          : showWrong
-                          ? "bg-red-50 border-red-500 dark:bg-red-900"
-                          : "border-gray-200"
-                      }`}
+                      className={`flex items-center space-x-3 p-4 rounded-lg border transition-all ${borderClass} ${bgClass}`}
                     >
                       <RadioGroupItem
                         value={answer.id.toString()}
-                        id={`answer-${answer.id}`}
+                        id={`q${question.id}-a${answer.id}`}
+                        className="text-blue-600"
                       />
                       <Label
-                        htmlFor={`answer-${answer.id}`}
-                        className="flex-1 cursor-pointer"
+                        htmlFor={`q${question.id}-a${answer.id}`}
+                        className="flex-1 cursor-pointer text-sm md:text-base"
                       >
                         {answer.answer_text}
                       </Label>
-                      {showCorrect && (
-                        <CheckCircle className="text-green-500" size={20} />
+
+                      {/* Indikator Icon di sebelah kanan */}
+                      {submitted && isCorrect && (
+                        <CheckCircle className="text-green-600" size={18} />
                       )}
-                      {showWrong && (
-                        <XCircle className="text-red-500" size={20} />
+                      {submitted && isSelected && !isCorrect && (
+                        <XCircle className="text-red-500" size={18} />
                       )}
                     </div>
                   );
@@ -290,40 +344,45 @@ export default function QuizTakingPage() {
         ))}
       </div>
 
-      {/* Submit Button */}
-      {!submitted && (
-        <div className="flex justify-center">
+      {/* Action Buttons */}
+      <div className="sticky bottom-6 flex justify-center py-4 z-10">
+        {!submitted ? (
           <Button
             onClick={handleSubmit}
-            disabled={!allAnswered}
-            className="bg-green-500 hover:bg-green-600 px-8"
-            size="lg"
+            disabled={!allAnswered || isSubmitting}
+            className="bg-blue-600 hover:bg-blue-700 shadow-lg px-8 py-6 text-lg rounded-full transition-transform hover:scale-105"
           >
-            Submit Quiz
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...
+              </>
+            ) : (
+              `Submit Quiz (${Object.keys(answers).length}/${totalQuestions})`
+            )}
           </Button>
-        </div>
-      )}
-
-      {submitted && (
-        <div className="flex justify-center gap-4">
-          <Button
-            onClick={() => router.push(`/users/courses/${courseId}`)}
-            variant="outline"
-          >
-            Back to Course
-          </Button>
-          <Button
-            onClick={() => {
-              setAnswers({});
-              setSubmitted(false);
-              setScore(0);
-            }}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            Retake Quiz
-          </Button>
-        </div>
-      )}
+        ) : (
+          <div className="flex gap-4 bg-white dark:bg-gray-900 p-2 rounded-full shadow-lg border">
+            <Button
+              onClick={() => router.push(`/users/courses/${courseId}`)}
+              variant="ghost"
+              className="rounded-full px-6"
+            >
+              Back to Course
+            </Button>
+            <Button
+              onClick={() => {
+                setAnswers({});
+                setSubmitted(false);
+                setScore(0);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="bg-blue-600 hover:bg-blue-700 rounded-full px-6"
+            >
+              Retake Quiz
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

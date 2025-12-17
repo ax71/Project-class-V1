@@ -1,3 +1,4 @@
+import apiClient from "@/lib/api-client";
 import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
@@ -71,6 +72,12 @@ export async function loginUser(payload: { email: string; password: string }) {
 
   return responseData;
 }
+
+export const updateProfile = async (name: string) => {
+  // Panggil endpoint baru yang kita buat di atas
+  const response = await apiClient.put("/profile/update", { name });
+  return response.data;
+};
 
 export async function logoutUser() {
   const token = Cookies.get("token");
