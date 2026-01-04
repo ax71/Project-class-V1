@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardContent,
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -139,13 +138,15 @@ export default function CoursesTaughtPage() {
               className="group flex flex-col overflow-hidden border hover:border-blue-300 hover:shadow-lg transition-all duration-300"
             >
               <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <Image
-                  src={courseService.getCourseImageUrl(course.cover_image)}
-                  alt={course.title}
-                  width={300}
-                  height={180}
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+                <div className="border border-gray-200 rounded-md overflow-hidden w-full relative">
+                  <Image
+                    src={courseService.getCourseImageUrl(course.cover_image)}
+                    alt={course.title}
+                    width={300}
+                    height={180}
+                    className="object-cover w-full h-40"
+                  />
+                </div>
               </div>
 
               <CardHeader className="pb-1">

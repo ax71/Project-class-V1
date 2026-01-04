@@ -167,7 +167,7 @@ export default function CertificateCard() {
                   className="flex-1 bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
                 >
                   <Eye size={16} />
-                  View & Download
+                  View
                 </Button>
               </CardFooter>
             </Card>
@@ -175,11 +175,9 @@ export default function CertificateCard() {
         </div>
       </div>
 
-      {/* MODAL VIEW & DOWNLOAD */}
       {selectedCertificate && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-lg max-w-5xl w-full relative my-8 shadow-2xl">
-            {/* Tombol Close */}
             <Button
               onClick={() => setSelectedCertificate(null)}
               className="absolute top-4 right-4 z-10 bg-gray-800 hover:bg-gray-900 rounded-full"
@@ -189,7 +187,6 @@ export default function CertificateCard() {
             </Button>
 
             <div className="p-6 flex justify-center bg-gray-100/50">
-              {/* AREA RENDERING SERTIFIKAT */}
               <div className="shadow-xl">
                 <CertificateView
                   ref={certificateRef}
@@ -199,9 +196,7 @@ export default function CertificateCard() {
               </div>
             </div>
 
-            {/* ACTION BUTTONS */}
             <div className="flex gap-3 p-6 border-t bg-white rounded-b-lg">
-              {/* Tombol Print (Bawaan Browser Dialog) */}
               <Button
                 onClick={() => handlePrint()}
                 variant="outline"
@@ -209,25 +204,6 @@ export default function CertificateCard() {
               >
                 <Printer className="mr-2" size={18} />
                 Print Dialog
-              </Button>
-
-              {/* 3. TOMBOL DOWNLOAD BARU (Direct PDF) */}
-              <Button
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating PDF...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2" size={18} />
-                    Download PDF Direct
-                  </>
-                )}
               </Button>
             </div>
           </div>

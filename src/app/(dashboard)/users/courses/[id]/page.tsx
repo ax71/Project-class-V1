@@ -145,7 +145,7 @@ export default function CourseDetailPage() {
             <div className="w-full md:w-1/3">
               <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                 <Image
-                  src={course.thumbnail || "/course-1.jpg"}
+                  src={courseService.getCourseImageUrl(course.cover_image)}
                   alt={course.title}
                   fill
                   className="object-cover"

@@ -35,11 +35,11 @@ export const SIDEBAR_MENU_LIST = {
       url: "/admin/courses",
       icon: Book,
     },
-    {
-      title: "Student Progress",
-      url: "/admin/student_progress",
-      icon: Activity,
-    },
+    // {
+    //   title: "Student Progress",
+    //   url: "/admin/student_progress",
+    //   icon: Activity,
+    // },
   ],
 };
 

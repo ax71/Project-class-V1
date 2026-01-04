@@ -16,13 +16,14 @@ import { progressService } from "@/services/progress.service";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import ErrorMessage from "@/components/common/ErrorMessage";
 import { BookOpen, CheckCircle } from "lucide-react";
+import { courseService } from "@/services/course.service";
 
 // Kita definisikan tipe data lokal agar aman
 interface ProgressSummaryItem {
   course_id: number;
   title: string;
   percentage: number;
-  thumbnail?: string;
+  cover_image?: string;
   is_completed?: boolean;
 }
 
@@ -88,9 +89,8 @@ export default function CardProgress() {
             <CardHeader className="p-0">
               <div className="relative w-full aspect-video bg-gray-200">
                 <Image
-                  src={item.thumbnail || "/course-1.jpg"}
-                  // PERBAIKAN 2: Pastikan ALT selalu ada
-                  alt={item.title || "Course Thumbnail"}
+                  src={courseService.getCourseImageUrl(item.cover_image)}
+                  alt={item.title}
                   fill
                   className="object-cover"
                 />

@@ -120,7 +120,7 @@ export default function CourseCard() {
               <div className="flex flex-col items-center justify-center">
                 <div className="border border-gray-200 rounded-md overflow-hidden w-full relative">
                   <Image
-                    src={course.thumbnail || "/course-1.jpg"}
+                    src={courseService.getCourseImageUrl(course.cover_image)}
                     alt={course.title}
                     width={300}
                     height={180}

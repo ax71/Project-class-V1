@@ -20,6 +20,7 @@ export interface User {
 
 export interface Course {
   id: number;
+  instructor: User;
   title: string;
   description: string;
   cover_image?: string | null;
@@ -98,7 +99,7 @@ export interface ProgressUpdateResponse {
 export interface CourseProgressSummary {
   id: number;
   title: string;
-  thumbnail?: string;
+  cover_image?: string;
   percentage: number;
   completed_items: number;
   total_items: number;

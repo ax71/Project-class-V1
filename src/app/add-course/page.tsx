@@ -57,7 +57,6 @@ export default function AddCoursePage() {
       payload.append("description", formData.description);
 
       if (imageFile) {
-        // Pastikan key 'thumbnail' atau 'cover_image' sesuai dengan yang diminta Backend Laravel
         payload.append("cover_image", imageFile);
       }
 
@@ -113,9 +112,9 @@ export default function AddCoursePage() {
 
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label htmlFor="thumbnail">Course Thumbnail</Label>
+              <Label htmlFor="cover_image">Course Thumbnail</Label>
               <Input
-                id="thumbnail"
+                id="cover_image"
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
